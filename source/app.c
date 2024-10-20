@@ -16,6 +16,7 @@ void app_init(app_t *app, app_config_t *config)
         consoleInit(NULL);
 
     user_collect_data(&app->curr_user, config->load_user_icon);
+    pad_init(&app->curr_pad);
 }
 
 void app_run(app_t *app)
@@ -24,8 +25,11 @@ void app_run(app_t *app)
         // Clear console fb so it updates every frame
         if (app->config->print_to_fb)
             consoleClear();
-        
         printf("Current user: %s", app->curr_user.nickname);
+
+        pad_update(&app->curr_pad);
+        if (pad_down(&app->curr_pad, HidNpadButton_Plus))
+            break;
 
         // Push console fb to next frame
         if (app->config->print_to_fb)

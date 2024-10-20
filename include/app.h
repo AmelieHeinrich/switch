@@ -11,6 +11,7 @@
 
 #include "core.h"
 #include "user.h"
+#include "input.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -21,6 +22,7 @@ typedef struct app_t {
     app_config_t *config;
 
     user_t curr_user;
+    pad_t curr_pad;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);
