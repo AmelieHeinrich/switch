@@ -1,0 +1,10 @@
+# junk
+build
+romfs
+.vscode
+.clangd
+
+# binaries
+*.elf
+*.nacp
+*.nro
