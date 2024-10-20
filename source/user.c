@@ -38,8 +38,6 @@ b8 user_collect_data(user_t *user, b8 load_icon)
             return false;
         }
     } else {
-        printf("Current userID: 0x%lx 0x%lx\n", user->user_id.uid[1], user->user_id.uid[0]);
-
         rc = accountGetProfile(&user->profile, user->user_id);
         if (R_FAILED(rc)) {
             printf("accountGetProfile() failed: 0x%x\n", rc);

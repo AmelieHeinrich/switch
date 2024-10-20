@@ -11,27 +11,41 @@
 void app_init(app_t *app, app_config_t *config)
 {
     app->config = config;
+    app->applet_mode = appletGetOperationMode();
 
     if (config->print_to_fb)
         consoleInit(NULL);
 
+    gpu_config_t gpu_config = {
+        .mode = app->applet_mode,
+        .fb_count = DEFAULT_GPU_FB_COUNT
+    };
+
     user_collect_data(&app->curr_user, config->load_user_icon);
     pad_init(&app->curr_pad);
+    gpu_init(&app->gpu, &gpu_config);
 }
 
 void app_run(app_t *app)
 {
     while (appletMainLoop()) {
-        // Clear console fb so it updates every frame
+        // @note(ame): Clear console fb so it updates every frame
         if (app->config->print_to_fb)
             consoleClear();
-        printf("Current user: %s", app->curr_user.nickname);
 
+        // @note(ame): Resize
+        AppletOperationMode mode = appletGetOperationMode();
+        if (mode != app->applet_mode) {
+            gpu_resize(&app->gpu, mode);
+            app->applet_mode = mode;
+        }
+
+        // @note(ame): Update pad
         pad_update(&app->curr_pad);
         if (pad_down(&app->curr_pad, HidNpadButton_Plus))
             break;
 
-        // Push console fb to next frame
+        // @note(ame): Push console fb to next frame
         if (app->config->print_to_fb)
             consoleUpdate(NULL);
     }
@@ -39,6 +53,7 @@ void app_run(app_t *app)
 
 void app_exit(app_t *app)
 {
+    gpu_exit(&app->gpu);
     if (app->config->print_to_fb)
         consoleExit(NULL);
 }

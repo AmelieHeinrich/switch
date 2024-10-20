@@ -11,7 +11,7 @@
 
 #include "core.h"
 
-// NOTE(@ame): pad id doesn't work yet, reads input from first controller instead
+// @note(ame): pad id doesn't work yet, reads input from first controller instead
 
 typedef struct pad_t {
     PadState pad;

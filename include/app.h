@@ -12,6 +12,7 @@
 #include "core.h"
 #include "user.h"
 #include "input.h"
+#include "gpu.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -19,10 +20,18 @@ typedef struct app_config_t {
 } app_config_t;
 
 typedef struct app_t {
+    // @note(ame): Config
     app_config_t *config;
 
+    // @note(ame): docked? handheld?
+    AppletOperationMode applet_mode;
+
+    // @note(ame): User
     user_t curr_user;
     pad_t curr_pad;
+
+    // @note(ame): Engine
+    gpu_t gpu;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);
