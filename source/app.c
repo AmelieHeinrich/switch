@@ -7,11 +7,17 @@
 #include "app.h"
 
 #include <stdio.h>
+#include <unistd.h>
 
 void app_init(app_t *app, app_config_t *config)
 {
     app->config = config;
     app->applet_mode = appletGetOperationMode();
+
+    if (config->redirect_stdio) {
+        socketInitializeDefault();
+        app->nxlink_sock = nxlinkStdioForDebug();
+    }
 
     if (config->print_to_fb)
         consoleInit(NULL);
@@ -56,4 +62,8 @@ void app_exit(app_t *app)
     gpu_exit(&app->gpu);
     if (app->config->print_to_fb)
         consoleExit(NULL);
+    if (app->config->redirect_stdio) {
+        close(app->nxlink_sock);
+        socketExit();
+    }
 }

@@ -12,11 +12,13 @@
 #include "core.h"
 #include "user.h"
 #include "input.h"
+#include "arena.h"
 #include "gpu.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
     b8 load_user_icon;
+    b8 redirect_stdio;
 } app_config_t;
 
 typedef struct app_t {
@@ -31,6 +33,7 @@ typedef struct app_t {
     pad_t curr_pad;
 
     // @note(ame): Engine
+    i32 nxlink_sock;
     gpu_t gpu;
 } app_t;
 
