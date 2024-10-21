@@ -12,17 +12,18 @@
 
 #include <deko3d.h>
 
-#include "arena.h"
+#include "heap.h"
 
 typedef struct cmd_mem_ring_t {
-    arena_t arena;
+    heap_t *cmd_heap;
+    heap_alloc_t ring_alloc;
 
     DkFence fences[CMD_MEM_MAX_RING_SIZE];
     i32 ring_size;
     u32 curr_slice;
 } cmd_mem_ring_t;
 
-void cmd_mem_ring_init(cmd_mem_ring_t *ring, DkDevice device, i32 ring_size);
+void cmd_mem_ring_init(cmd_mem_ring_t *ring, DkDevice device, heap_t *cmd_heap, i32 ring_size);
 void cmd_mem_ring_free(cmd_mem_ring_t *ring);
 void cmd_mem_ring_begin(cmd_mem_ring_t *ring, DkCmdBuf buf);
 DkCmdList cmd_mem_ring_end(cmd_mem_ring_t *ring, DkCmdBuf buf);

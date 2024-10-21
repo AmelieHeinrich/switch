@@ -27,7 +27,7 @@ void cmd_list_draw(DkCmdBuf buf, DkPrimitive prim, u32 vtx)
 
 void cmd_list_bind_gfx_pipeline(DkCmdBuf buf, gfx_pipeline_t *pipeline)
 {
-    DkShader const* shaders[] = { &pipeline->vert, &pipeline->frag };
+    DkShader const* shaders[] = { &pipeline->vert.shader, &pipeline->frag.shader };
     DkRasterizerState rasterizerState;
     DkColorState colorState;
     DkColorWriteState colorWriteState;

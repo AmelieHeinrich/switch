@@ -32,7 +32,6 @@ void app_init(app_t *app, app_config_t *config)
     user_collect_data(&app->curr_user, config->load_user_icon);
     pad_init(&app->curr_pad);
     gpu_init(&app->gpu, &gpu_config);
-
     gfx_pipeline_init(&app->tri_pipeline, &app->gpu, "romfs:/shaders/tri_vsh.dksh", "romfs:/shaders/tri_fsh.dksh");
 }
 

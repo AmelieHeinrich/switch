@@ -57,4 +57,10 @@ void allocator_reset(allocator_t *allocator);
 allocation_t allocator_new(allocator_t *allocator, u32 size);
 void allocator_delete(allocator_t *allocator, allocation_t *node);
 
+// utils
+u32 uint_to_float_roundup(u32 size);
+u32 uint_to_float_round_down(u32 size);
+u32 float_to_uint(u32 float_val);
+u32 find_lowest_set_bit_after(u32 bitmask, u32 start_bit_index);
+
 #endif

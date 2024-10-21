@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "gpu.h"
+#include "util.h"
 
 void gpu_init(gpu_t *gpu, gpu_config_t *config)
 {
@@ -39,13 +40,14 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     fb_size = (fb_size + fb_align - 1) &~ (fb_align - 1);
 
     // @note(ame): allocate arenas
-    arena_init_gpu(&gpu->swapchain_arena, fb_size * DEFAULT_GPU_FB_COUNT, DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, gpu->device);
+    heap_init(&gpu->swapchain_heap, fb_size * DEFAULT_GPU_FB_COUNT, DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, gpu->device);
+    heap_init(&gpu->cmd_heap, CMD_ARENA_SIZE, DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, gpu->device);
 
     // @note(ame): allocate back buffers
     DkImage const* swapchain_images[DEFAULT_GPU_FB_COUNT];
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         swapchain_images[i] = &gpu->fbs[i];
-        dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_arena.gpu_block, i * fb_size);
+        dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_heap.block, i * fb_size);
 
         DkCmdBufMaker cmd_maker;
         dkCmdBufMakerDefaults(&cmd_maker, gpu->device);
@@ -66,7 +68,7 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     gpu->queue = dkQueueCreate(&queue_maker);
 
     // @note(ame): cmd ring
-    cmd_mem_ring_init(&gpu->cmd_ring, gpu->device, DEFAULT_GPU_FB_COUNT);
+    cmd_mem_ring_init(&gpu->cmd_ring, gpu->device, &gpu->cmd_heap, DEFAULT_GPU_FB_COUNT);
 
     // @note(ame): shader loader
     shader_loader_init(&gpu->shader_loader, gpu->device);
@@ -115,7 +117,7 @@ void gpu_resize(gpu_t *gpu, AppletOperationMode mode)
     DkImage const* swapchain_images[DEFAULT_GPU_FB_COUNT];
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         swapchain_images[i] = &gpu->fbs[i];
-        dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_arena.gpu_block, i * fb_size);
+        dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_heap.block, i * fb_size);
 
         dkImageViewDefaults(&gpu->image_views[i], &gpu->fbs[i]);
     }
@@ -137,7 +139,7 @@ void gpu_exit(gpu_t *gpu)
     cmd_mem_ring_free(&gpu->cmd_ring);
     dkQueueDestroy(gpu->queue);
     dkSwapchainDestroy(gpu->swapchain);
-    arena_free(&gpu->swapchain_arena);
+    heap_free(&gpu->swapchain_heap);
     dkDeviceDestroy(gpu->device);
 }
 

@@ -12,7 +12,6 @@
 #include "core.h"
 #include "user.h"
 #include "input.h"
-#include "arena.h"
 #include "gpu.h"
 #include "cmd_list.h"
 #include "gfx_pipeline.h"

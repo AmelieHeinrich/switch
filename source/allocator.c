@@ -5,12 +5,14 @@
 //
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "allocator.h"
+#include "util.h"
 
 #define MANTISSA_BITS 3
-#define MANTISSA_VALUE 1 << MANTISSA_BITS
-#define MANTISSA_MASK MANTISSA_VALUE - 1
+#define MANTISSA_VALUE (1 << MANTISSA_BITS)
+#define MANTISSA_MASK (MANTISSA_VALUE - 1)
 
 u32 lzcnt_nonzero(u32 v)
 {
@@ -141,6 +143,7 @@ void allocator_remove_node_from_bin(allocator_t *allocator, u32 node_index)
 
 void allocator_init(allocator_t *allocator, u32 size)
 {
+    memset(allocator, 0, sizeof(allocator_t));
     allocator->size = size;
     allocator->max_allocs = 128 * 1024;
     allocator->nodes = NULL;
@@ -182,7 +185,7 @@ void allocator_reset(allocator_t *allocator)
 
 allocation_t allocator_new(allocator_t *allocator, u32 size)
 {
-    if (allocator->free_offset = 0) {
+    if (allocator->free_offset == 0) {
         return (allocation_t){
             .offset = ALLOCATION_NO_SPACE,
             .metadata = ALLOCATION_NO_SPACE
@@ -216,7 +219,7 @@ allocation_t allocator_new(allocator_t *allocator, u32 size)
 
     u32 bin_index = (top_bin_index << TOP_BINS_INDEX_SHIFT) | leaf_bin_index;
 
-    u32 node_index = allocator->bin_indices[node_index];
+    u32 node_index = allocator->bin_indices[bin_index];
     allocator_node_t* node = &allocator->nodes[node_index];
     u32 node_total_size = node->data_size;
     node->data_size = size;
@@ -244,7 +247,7 @@ allocation_t allocator_new(allocator_t *allocator, u32 size)
         node->neighbor_next = new_node_index;
     }
 
-    return (allocation_t){
+    return (allocation_t) {
         .offset = node->data_offset,
         .metadata = node_index
     };

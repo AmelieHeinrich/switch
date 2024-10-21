@@ -8,6 +8,7 @@
 
 void gfx_pipeline_init(gfx_pipeline_t *pipeline, gpu_t *gpu, const char *v, const char *f)
 {
+    pipeline->gpu = gpu;
     pipeline->cull_mode = DkFace_Back;
 
     pipeline->vert = shader_loader_read(&gpu->shader_loader, v);
@@ -16,5 +17,6 @@ void gfx_pipeline_init(gfx_pipeline_t *pipeline, gpu_t *gpu, const char *v, cons
 
 void gfx_pipeline_free(gfx_pipeline_t *pipeline)
 {
-    // @note(ame): empty
+    shader_loader_free_shader(&pipeline->gpu->shader_loader, &pipeline->vert);
+    shader_loader_free_shader(&pipeline->gpu->shader_loader, &pipeline->frag);
 }

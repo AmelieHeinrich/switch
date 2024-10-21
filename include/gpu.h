@@ -11,7 +11,7 @@
 #include <deko3d.h>
 
 #include "core.h"
-#include "arena.h"
+#include "heap.h"
 #include "cmd_mem_ring.h"
 #include "shader_loader.h"
 
@@ -22,7 +22,7 @@
 #define UNDOCKED_WIDTH 1280
 #define UNDOCKED_HEIGHT 720
 
-#define CMD_ARENA_SIZE KILOBYTES(16)
+#define CMD_ARENA_SIZE KILOBYTES(128)
 
 typedef struct gpu_config_t {
     AppletOperationMode mode;
@@ -52,8 +52,9 @@ typedef struct gpu_t {
     DkImageView image_views[DEFAULT_GPU_FB_COUNT];
     DkCmdBuf cmd_bufs[DEFAULT_GPU_FB_COUNT];
 
-    // @note(ame): arenas
-    arena_t swapchain_arena;
+    // @note(ame): heaps
+    heap_t swapchain_heap;
+    heap_t cmd_heap;
 } gpu_t;
 
 void gpu_init(gpu_t *gpu, gpu_config_t *config);

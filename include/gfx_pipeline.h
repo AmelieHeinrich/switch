@@ -10,12 +10,14 @@
 #include "gpu.h"
 
 typedef struct gfx_pipeline_t {
+    gpu_t *gpu;
+
     // @todo(ame): vertex state
     DkFace cull_mode;
 
     // @note(ame): shaders
-    DkShader vert;
-    DkShader frag;
+    shader_t vert;
+    shader_t frag;
 } gfx_pipeline_t;
 
 void gfx_pipeline_init(gfx_pipeline_t *pipeline, gpu_t *gpu, const char *v, const char *f);
