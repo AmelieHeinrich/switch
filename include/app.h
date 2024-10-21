@@ -35,6 +35,8 @@ typedef struct app_t {
     // @note(ame): Engine
     i32 nxlink_sock;
     gpu_t gpu;
+    DkShader vert;
+    DkShader frag;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);

@@ -67,6 +67,9 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
 
     // @note(ame): cmd ring
     cmd_mem_ring_init(&gpu->cmd_ring, gpu->device, DEFAULT_GPU_FB_COUNT);
+
+    // @note(ame): shader loader
+    shader_loader_init(&gpu->shader_loader, gpu->device);
 }
 
 void gpu_resize(gpu_t *gpu, AppletOperationMode mode)
@@ -91,6 +94,7 @@ void gpu_exit(gpu_t *gpu)
 {
     dkQueueWaitIdle(gpu->queue);
 
+    shader_loader_free(&gpu->shader_loader);
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         dkCmdBufDestroy(gpu->cmd_bufs[i]);
     }

@@ -13,6 +13,7 @@
 #include "core.h"
 #include "arena.h"
 #include "cmd_mem_ring.h"
+#include "shader_loader.h"
 
 #define DEFAULT_GPU_FB_COUNT 2
 
@@ -43,6 +44,7 @@ typedef struct gpu_t {
     DkDevice device;
     DkQueue queue;
     DkSwapchain swapchain;
+    shader_loader_t shader_loader;
 
     // @note(ame): frame dependent
     cmd_mem_ring_t cmd_ring;
