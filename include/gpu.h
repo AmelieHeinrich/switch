@@ -24,7 +24,6 @@
 
 typedef struct gpu_config_t {
     AppletOperationMode mode;
-    u32 fb_count;
 } gpu_config_t;
 
 typedef struct gpu_t {

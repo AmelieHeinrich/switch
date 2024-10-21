@@ -23,8 +23,7 @@ void app_init(app_t *app, app_config_t *config)
         consoleInit(NULL);
 
     gpu_config_t gpu_config = {
-        .mode = app->applet_mode,
-        .fb_count = DEFAULT_GPU_FB_COUNT
+        .mode = app->applet_mode
     };
 
     user_collect_data(&app->curr_user, config->load_user_icon);

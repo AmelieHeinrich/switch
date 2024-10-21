@@ -12,7 +12,7 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
 {
     memset(gpu, 0, sizeof(gpu_t));
 
-    gpu->fb_count = config->fb_count;
+    gpu->fb_count = DEFAULT_GPU_FB_COUNT;
     gpu_resize(gpu, config->mode);
 
     // @note(ame): create device
@@ -29,26 +29,28 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     fb_maker.dimensions[0] = gpu->width;
     fb_maker.dimensions[1] = gpu->height;
 
+    // @note(ame): Initialize swapchain layout
     DkImageLayout fb_layout;
     dkImageLayoutInitialize(&fb_layout, &fb_maker);
 
+    // @note(ame): Get framebuffer size & alignment
     u32 fb_size = dkImageLayoutGetSize(&fb_layout);
     u32 fb_align = dkImageLayoutGetAlignment(&fb_layout);
     fb_size = (fb_size + fb_align - 1) &~ (fb_align - 1);
 
     // @note(ame): allocate arenas
-    arena_init_gpu(&gpu->swapchain_arena, fb_size * gpu->fb_count, DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, gpu->device);
+    arena_init_gpu(&gpu->swapchain_arena, fb_size * DEFAULT_GPU_FB_COUNT, DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, gpu->device);
 
     // @note(ame): allocate back buffers
     DkImage const* swapchain_images[DEFAULT_GPU_FB_COUNT];
-    for (i32 i = 0; i < gpu->fb_count; i++) {
+    for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         swapchain_images[i] = &gpu->fbs[i];
         dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_arena.gpu_block, i * fb_size);
     }
 
-    // @note(ame): swapchain
+    // @note(ame): swapchain creation
     DkSwapchainMaker swap_maker;
-    dkSwapchainMakerDefaults(&swap_maker, gpu->device, nwindowGetDefault(), swapchain_images, gpu->fb_count);
+    dkSwapchainMakerDefaults(&swap_maker, gpu->device, nwindowGetDefault(), swapchain_images, DEFAULT_GPU_FB_COUNT);
     gpu->swapchain = dkSwapchainCreate(&swap_maker);
 
     // @note(ame): queue
