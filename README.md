@@ -20,7 +20,6 @@ And that's it! Launch the .nro file using your emulator of choice or by dumping 
 
 ## Roadmap
 
-- Offset allocator for CPU/GPU memory arenas
 - GPU buffers
 - Pipeline vertex input states
 - Draw a quad

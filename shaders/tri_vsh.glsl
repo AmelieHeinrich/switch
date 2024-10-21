@@ -1,23 +1,12 @@
 #version 460
 
-// Hardcoded array of vertex positions for our triangle
-const vec4 positions[3] = vec4[](
-    vec4( 0.0, +0.5, 0.0, 1.0),
-    vec4(-0.5, -0.5, 0.0, 1.0),
-    vec4(+0.5, -0.5, 0.0, 1.0)
-);
+layout (location = 0) in vec3 vPosition;
+layout (location = 1) in vec3 vColor;
 
-// Hardcoded array of vertex colors for our triangle
-const vec4 colors[3] = vec4[](
-    vec4(1.0, 0.0, 0.0, 1.0),
-    vec4(0.0, 1.0, 0.0, 1.0),
-    vec4(0.0, 0.0, 1.0, 1.0)
-);
-
-layout (location = 0) out vec4 outColor;
+layout (location = 0) out vec3 fColor;
 
 void main()
 {
-    gl_Position = positions[gl_VertexID];
-    outColor = colors[gl_VertexID];
+    gl_Position = vec4(vPosition, 1.0);
+    fColor = vColor;
 }

@@ -23,6 +23,7 @@
 #define UNDOCKED_HEIGHT 720
 
 #define CMD_ARENA_SIZE KILOBYTES(128)
+#define DATA_ARENA_SIZE MEGABYTES(256)
 
 typedef struct gpu_config_t {
     AppletOperationMode mode;
@@ -55,6 +56,7 @@ typedef struct gpu_t {
     // @note(ame): heaps
     heap_t swapchain_heap;
     heap_t cmd_heap;
+    heap_t data_heap; // for buffers, textures and whatnot
 } gpu_t;
 
 void gpu_init(gpu_t *gpu, gpu_config_t *config);

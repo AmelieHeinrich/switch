@@ -15,6 +15,7 @@
 #include "gpu.h"
 #include "cmd_list.h"
 #include "gfx_pipeline.h"
+#include "buffer.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -39,6 +40,8 @@ typedef struct app_t {
     
     // @note(ame): renderer
     gfx_pipeline_t tri_pipeline;
+    buffer_t vertex_buffer;
+    buffer_t index_buffer;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);

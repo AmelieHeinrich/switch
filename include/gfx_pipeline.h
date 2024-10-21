@@ -9,10 +9,16 @@
 
 #include "gpu.h"
 
+#define MAX_VTX_ATTRIB_STATES 16
+
 typedef struct gfx_pipeline_t {
     gpu_t *gpu;
 
-    // @todo(ame): vertex state
+    // @note(ame): vertex input state
+    DkVtxAttribState states[MAX_VTX_ATTRIB_STATES];
+    i32 state_count;
+
+    // @note(ame): rasterizier state
     DkFace cull_mode;
 
     // @note(ame): shaders

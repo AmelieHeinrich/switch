@@ -20,9 +20,30 @@ void cmd_list_clear_color(DkCmdBuf buf, HMM_Vec3 col, u32 idx)
     dkCmdBufClearColorFloat(buf, idx, DkColorMask_RGBA, col.X, col.Y, col.Z, 1.0f);
 }
 
+void cmd_list_bind_vtx_buffer(DkCmdBuf buf, buffer_t *buffer)
+{
+    DkVtxBufferState state = {
+        .stride = buffer->stride,
+        .divisor = 0
+
+    };
+    dkCmdBufBindVtxBufferState(buf, &state, 1);
+    dkCmdBufBindVtxBuffer(buf, 0, buffer->mem.gpu_addr, buffer->mem.size);
+}
+
+void cmd_list_bind_idx_buffer(DkCmdBuf buf, buffer_t *buffer)
+{
+    dkCmdBufBindIdxBuffer(buf, DkIdxFormat_Uint32, buffer->mem.gpu_addr);
+}
+
 void cmd_list_draw(DkCmdBuf buf, DkPrimitive prim, u32 vtx)
 {
     dkCmdBufDraw(buf, prim, vtx, 1, 0, 0);
+}
+
+void cmd_list_draw_indexed(DkCmdBuf buf, DkPrimitive prim, u32 idx)
+{
+    dkCmdBufDrawIndexed(buf, prim, idx, 1, 0, 0, 0);
 }
 
 void cmd_list_bind_gfx_pipeline(DkCmdBuf buf, gfx_pipeline_t *pipeline)
@@ -37,9 +58,11 @@ void cmd_list_bind_gfx_pipeline(DkCmdBuf buf, gfx_pipeline_t *pipeline)
     dkColorStateDefaults(&colorState);
     dkColorWriteStateDefaults(&colorWriteState);
 
-    rasterizerState.cullMode = pipeline->cull_mode;
+    rasterizerState.cullMode = DkFace_None;
+
     dkCmdBufBindShaders(buf, DkStageFlag_GraphicsMask, shaders, 2);
     dkCmdBufBindRasterizerState(buf, &rasterizerState);
     dkCmdBufBindColorState(buf, &colorState);
     dkCmdBufBindColorWriteState(buf, &colorWriteState);
+    dkCmdBufBindVtxAttribState(buf, pipeline->states, pipeline->state_count);
 }
