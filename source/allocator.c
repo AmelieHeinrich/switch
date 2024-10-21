@@ -86,6 +86,59 @@ u32 find_lowest_set_bit_after(u32 bitmask, u32 start_bit_index)
     return tzcnt_nonzero(bits_after);
 }
 
+u32 allocator_insert_node_into_bin(allocator_t *allocator, u32 size, u32 data_offset)
+{
+    u32 bin_index = uint_to_float_round_down(size);
+
+    u32 top_bin_index = bin_index >> TOP_BINS_INDEX_SHIFT;
+    u32 leaf_bin_index = bin_index & LEAF_BINS_INDEX_MASK;
+
+    if (allocator->bin_indices[bin_index] == ALLOCATION_NO_SPACE) {
+        allocator->used_bins[top_bin_index] |= 1 << leaf_bin_index;
+        allocator->used_bins_top |= 1 << top_bin_index;
+    }
+
+    u32 top_node_index = allocator->bin_indices[bin_index];
+    u32 node_index = allocator->free_nodes[allocator->free_offset--];
+
+    allocator->nodes[node_index].data_offset = data_offset;
+    allocator->nodes[node_index].data_size = size;
+    allocator->nodes[node_index].bin_list_next = top_node_index;
+    if (top_node_index != ALLOCATION_NO_SPACE) allocator->nodes[node_index].bin_list_prev = node_index;
+    allocator->bin_indices[bin_index] = node_index;
+
+    allocator->free_storage += size;
+    return node_index;
+}
+
+void allocator_remove_node_from_bin(allocator_t *allocator, u32 node_index)
+{
+    allocator_node_t *node = &allocator->nodes[node_index];
+
+    if (node->bin_list_prev != ALLOCATION_NO_SPACE) {
+        allocator->nodes[node->bin_list_prev].bin_list_prev = node->bin_list_next;
+        if (node->bin_list_next != ALLOCATION_NO_SPACE) allocator->nodes[node->bin_list_next].bin_list_prev = node->bin_list_prev;
+    } else {
+        u32 bin_index = uint_to_float_round_down(node->data_size);
+        u32 top_bin_index = bin_index >> TOP_BINS_INDEX_SHIFT;
+        u32 leaf_bin_index = bin_index & LEAF_BINS_INDEX_MASK;
+
+        allocator->bin_indices[bin_index] = node->bin_list_next;
+        if (node->bin_list_next != ALLOCATION_NO_SPACE) allocator->nodes[node->bin_list_next].bin_list_prev = ALLOCATION_NO_SPACE;
+
+        if (allocator->bin_indices[bin_index] == ALLOCATION_NO_SPACE) {
+            allocator->used_bins[bin_index] &= ~(1 << leaf_bin_index);
+
+            if (allocator->used_bins[top_bin_index] == 0) {
+                allocator->used_bins_top &= ~(1 << top_bin_index);
+            }
+        }
+    }
+
+    allocator->free_nodes[++allocator->free_offset] = node_index;
+    allocator->free_storage -= node->data_size;
+}
+
 void allocator_init(allocator_t *allocator, u32 size)
 {
     allocator->size = size;
@@ -107,14 +160,143 @@ void allocator_reset(allocator_t *allocator)
     allocator->free_storage = 0;
     allocator->used_bins_top = 0;
     allocator->free_offset = allocator->max_allocs - 1;
+
+    for (u32 i = 0; i < NUM_TOP_BINS; i++)
+        allocator->used_bins[i] = 0;
+
+    for (u32 i = 0; i < NUM_LEAF_BINS; i++)
+        allocator->bin_indices[i] = ALLOCATION_NO_SPACE;
+
+    if (allocator->nodes) free(allocator->nodes);
+    if (allocator->free_nodes) free(allocator->free_nodes);
+
+    allocator->nodes = malloc(sizeof(allocator_node_t) * allocator->max_allocs);
+    allocator->free_nodes = malloc(sizeof(u32) * allocator->max_allocs);
+
+    for (u32 i = 0; i < allocator->max_allocs; i++) {
+        allocator->free_nodes[i] = allocator->max_allocs - i - 1;
+    }
+
+    allocator_insert_node_into_bin(allocator, allocator->size, 0);
 }
 
-allocator_node_t allocator_new(u32 size)
+allocation_t allocator_new(allocator_t *allocator, u32 size)
 {
+    if (allocator->free_offset = 0) {
+        return (allocation_t){
+            .offset = ALLOCATION_NO_SPACE,
+            .metadata = ALLOCATION_NO_SPACE
+        };
+    }
 
+    u32 min_bin_index = uint_to_float_roundup(size);
+
+    u32 min_top_bin_index = min_bin_index >> TOP_BINS_INDEX_SHIFT;
+    u32 min_leaf_bin_index = min_bin_index & LEAF_BINS_INDEX_MASK;
+
+    u32 top_bin_index = min_top_bin_index;
+    u32 leaf_bin_index = ALLOCATION_NO_SPACE;
+
+    if (allocator->used_bins_top & (1 << top_bin_index)) {
+        leaf_bin_index = find_lowest_set_bit_after(allocator->used_bins[top_bin_index], min_leaf_bin_index);
+    }
+
+    if (leaf_bin_index == ALLOCATION_NO_SPACE) {
+        top_bin_index = find_lowest_set_bit_after(allocator->used_bins_top, min_top_bin_index + 1);
+
+        if (top_bin_index == ALLOCATION_NO_SPACE) {
+            return (allocation_t){
+                .offset = ALLOCATION_NO_SPACE,
+                .metadata = ALLOCATION_NO_SPACE
+            };
+        }
+
+        leaf_bin_index = tzcnt_nonzero(allocator->used_bins[top_bin_index]);
+    }
+
+    u32 bin_index = (top_bin_index << TOP_BINS_INDEX_SHIFT) | leaf_bin_index;
+
+    u32 node_index = allocator->bin_indices[node_index];
+    allocator_node_t* node = &allocator->nodes[node_index];
+    u32 node_total_size = node->data_size;
+    node->data_size = size;
+    node->used = true;
+
+    allocator->bin_indices[bin_index] = node->bin_list_next;
+    if (node->bin_list_next != ALLOCATION_NO_SPACE) allocator->nodes[node->bin_list_next].bin_list_prev = ALLOCATION_NO_SPACE;
+    allocator->free_storage -= node_total_size;
+
+    if (allocator->bin_indices[bin_index] != ALLOCATION_NO_SPACE) {
+        allocator->used_bins[top_bin_index] &= ~(1 << leaf_bin_index);
+
+        if (allocator->used_bins[top_bin_index] == 0) {
+            allocator->used_bins_top &= ~(1 << top_bin_index);
+        }
+    }
+
+    u32 reminder_size = node_total_size - size;
+    if (reminder_size > 0) {
+        u32 new_node_index = allocator_insert_node_into_bin(allocator, reminder_size, node->data_offset + size);
+
+        if (node->neighbor_next != ALLOCATION_NO_SPACE) allocator->nodes[node->neighbor_next].neighbor_prev = new_node_index;
+        allocator->nodes[new_node_index].neighbor_prev = node_index;
+        allocator->nodes[new_node_index].neighbor_next = node->neighbor_next;
+        node->neighbor_next = new_node_index;
+    }
+
+    return (allocation_t){
+        .offset = node->data_offset,
+        .metadata = node_index
+    };
 }
 
-void allocator_delete(allocator_node_t *node)
+void allocator_delete(allocator_t *allocator, allocation_t *allocation)
 {
+    if (allocation->metadata == ALLOCATION_NO_SPACE) return;
+    if (!allocator->nodes) return;
 
+    u32 node_index = allocation->metadata;
+    allocator_node_t *node = &allocator->nodes[node_index];
+
+    if (node->used == false) return;
+
+    u32 offset = node->data_offset;
+    u32 size = node->data_size;
+
+    if ((node->neighbor_prev != ALLOCATION_NO_SPACE) && (allocator->nodes[node->neighbor_prev].used == false)) {
+        allocator_node_t* prev_node = &allocator->nodes[node->neighbor_prev];
+        offset += prev_node->data_offset;
+        size += prev_node->data_size;
+
+        allocator_remove_node_from_bin(allocator, node->neighbor_prev);
+
+        if (prev_node->neighbor_next != node_index) return;
+        node->neighbor_prev = prev_node->neighbor_prev;
+    }
+
+    if ((node->neighbor_next != ALLOCATION_NO_SPACE) && (allocator->nodes[node->neighbor_next].used == false)) {
+        allocator_node_t* next_node = &allocator->nodes[node->neighbor_next];
+        size += next_node->data_size;
+
+        allocator_remove_node_from_bin(allocator, node->neighbor_next);
+
+        if (next_node->neighbor_prev != node_index) return;
+        node->neighbor_next = next_node->neighbor_next;
+    }
+
+    u32 neighbor_next = node->neighbor_next;
+    u32 neighbor_prev = node->neighbor_prev;
+
+    allocator->free_nodes[++allocator->free_offset] = node_index;
+
+    u32 combined_node_index = allocator_insert_node_into_bin(allocator, size, offset);
+
+    if (neighbor_next != ALLOCATION_NO_SPACE) {
+        allocator->nodes[combined_node_index].neighbor_next = neighbor_next;
+        allocator->nodes[neighbor_next].neighbor_prev = combined_node_index;
+    }
+    if (neighbor_prev != ALLOCATION_NO_SPACE) {
+        allocator->nodes[combined_node_index].neighbor_prev = neighbor_prev;
+        allocator->nodes[neighbor_prev].neighbor_next = combined_node_index;
+    }
 }

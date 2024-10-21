@@ -54,7 +54,7 @@ void allocator_init(allocator_t *allocator, u32 size);
 void allocator_free(allocator_t *allocator);
 void allocator_reset(allocator_t *allocator);
 
-allocator_node_t allocator_new(u32 size);
-void allocator_delete(allocator_node_t *node);
+allocation_t allocator_new(allocator_t *allocator, u32 size);
+void allocator_delete(allocator_t *allocator, allocation_t *node);
 
 #endif
