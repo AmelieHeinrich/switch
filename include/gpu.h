@@ -12,6 +12,7 @@
 
 #include "core.h"
 #include "arena.h"
+#include "cmd_mem_ring.h"
 
 #define DEFAULT_GPU_FB_COUNT 2
 
@@ -26,6 +27,11 @@ typedef struct gpu_config_t {
     AppletOperationMode mode;
 } gpu_config_t;
 
+typedef struct frame_t {
+    DkImageView backbuffer_view;
+    DkCmdBuf cmd_buf;
+} frame_t;
+
 typedef struct gpu_t {
     // @note(ame): config
     u32 width;
@@ -36,9 +42,14 @@ typedef struct gpu_t {
     // @note(ame): internals
     DkDevice device;
     DkQueue queue;
-    DkImage fbs[DEFAULT_GPU_FB_COUNT];
     DkSwapchain swapchain;
-    
+
+    // @note(ame): frame dependent
+    cmd_mem_ring_t cmd_ring;
+    DkImage fbs[DEFAULT_GPU_FB_COUNT];
+    DkImageView image_views[DEFAULT_GPU_FB_COUNT];
+    DkCmdBuf cmd_bufs[DEFAULT_GPU_FB_COUNT];
+
     // @note(ame): arenas
     arena_t swapchain_arena;
 } gpu_t;
@@ -47,7 +58,8 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config);
 void gpu_exit(gpu_t *gpu);
 void gpu_resize(gpu_t *gpu, AppletOperationMode mode);
 
-void gpu_begin(gpu_t *gpu);
+frame_t gpu_begin(gpu_t *gpu);
+void gpu_end(gpu_t *gpu, frame_t *frame);
 void gpu_present(gpu_t *gpu);
 
 #endif

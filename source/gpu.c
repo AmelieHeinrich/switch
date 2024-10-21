@@ -46,6 +46,12 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         swapchain_images[i] = &gpu->fbs[i];
         dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_arena.gpu_block, i * fb_size);
+
+        DkCmdBufMaker cmd_maker;
+        dkCmdBufMakerDefaults(&cmd_maker, gpu->device);
+        gpu->cmd_bufs[i] = dkCmdBufCreate(&cmd_maker);
+
+        dkImageViewDefaults(&gpu->image_views[i], &gpu->fbs[i]);
     }
 
     // @note(ame): swapchain creation
@@ -58,6 +64,9 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     dkQueueMakerDefaults(&queue_maker, gpu->device);
     queue_maker.flags = DkQueueFlags_Graphics;
     gpu->queue = dkQueueCreate(&queue_maker);
+
+    // @note(ame): cmd ring
+    cmd_mem_ring_init(&gpu->cmd_ring, gpu->device, DEFAULT_GPU_FB_COUNT);
 }
 
 void gpu_resize(gpu_t *gpu, AppletOperationMode mode)
@@ -80,15 +89,32 @@ void gpu_exit(gpu_t *gpu)
 {
     dkQueueWaitIdle(gpu->queue);
 
+    for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
+        dkCmdBufDestroy(gpu->cmd_bufs[i]);
+    }
+    cmd_mem_ring_free(&gpu->cmd_ring);
     dkQueueDestroy(gpu->queue);
     dkSwapchainDestroy(gpu->swapchain);
     arena_free(&gpu->swapchain_arena);
     dkDeviceDestroy(gpu->device);
 }
 
-void gpu_begin(gpu_t *gpu)
+frame_t gpu_begin(gpu_t *gpu)
 {
     gpu->curr_frame = dkQueueAcquireImage(gpu->queue, gpu->swapchain);
+
+    cmd_mem_ring_begin(&gpu->cmd_ring, gpu->cmd_bufs[gpu->curr_frame]);
+
+    return (frame_t){
+        .backbuffer_view = gpu->image_views[gpu->curr_frame],
+        .cmd_buf = gpu->cmd_bufs[gpu->curr_frame]
+    };
+}
+
+void gpu_end(gpu_t *gpu, frame_t *frame)
+{
+    DkCmdList list = cmd_mem_ring_end(&gpu->cmd_ring, frame->cmd_buf);
+    dkQueueSubmitCommands(gpu->queue, list);
 }
 
 void gpu_present(gpu_t *gpu)

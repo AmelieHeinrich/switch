@@ -16,6 +16,8 @@
 #define MEGABYTES(b) KILOBYTES(b) * 1024
 #define GIGABYTES(b) MEGABYTES(b) * 1024
 
+#define ALIGN(s, a) ((s + a - 1) &~ (a - 1))
+
 typedef enum arena_result {
     /// @note(ame): all gud
     ArenaResult_Success = BIT(0),
