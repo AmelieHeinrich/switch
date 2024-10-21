@@ -33,8 +33,7 @@ void app_init(app_t *app, app_config_t *config)
     pad_init(&app->curr_pad);
     gpu_init(&app->gpu, &gpu_config);
 
-    app->vert = shader_loader_read(&app->gpu.shader_loader, "romfs:/shaders/tri_vsh.dksh");
-    app->frag = shader_loader_read(&app->gpu.shader_loader, "romfs:/shaders/tri_fsh.dksh");
+    gfx_pipeline_init(&app->tri_pipeline, &app->gpu, "romfs:/shaders/tri_vsh.dksh", "romfs:/shaders/tri_fsh.dksh");
 }
 
 void app_run(app_t *app)
@@ -60,31 +59,11 @@ void app_run(app_t *app)
         if (!app->config->print_to_fb) {
             frame_t frame = gpu_begin(&app->gpu);
             {
-                DkViewport viewport = { 0.0f, 0.0f, (float)app->gpu.width, (float)app->gpu.height, 0.0f, 1.0f };
-                DkScissor scissor = { 0, 0, app->gpu.width, app->gpu.height };
-                DkShader const* shaders[] = { &app->vert, &app->frag };
-                DkRasterizerState rasterizerState;
-                DkColorState colorState;
-                DkColorWriteState colorWriteState;
-
-                // Initialize state structs with the deko3d defaults
-                dkRasterizerStateDefaults(&rasterizerState);
-                dkColorStateDefaults(&colorState);
-                dkColorWriteStateDefaults(&colorWriteState);
-
-                dkCmdBufSetViewports(frame.cmd_buf, 0, &viewport, 1);
-                dkCmdBufSetScissors(frame.cmd_buf, 0, &scissor, 1);
+                cmd_list_viewport_scissor(frame.cmd_buf, (float)app->gpu.width, (float)app->gpu.height);
                 dkCmdBufBindRenderTarget(frame.cmd_buf, &frame.backbuffer_view, NULL);
-                if (app->applet_mode == AppletOperationMode_Console) {
-                    dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 0.0f, 0.0f, 0.0f, 1.0f);
-                } else {
-                    dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 1.0f, 1.0f, 1.0f, 1.0f);
-                }
-                dkCmdBufBindShaders(frame.cmd_buf, DkStageFlag_GraphicsMask, shaders, 2);
-                dkCmdBufBindRasterizerState(frame.cmd_buf, &rasterizerState);
-                dkCmdBufBindColorState(frame.cmd_buf, &colorState);
-                dkCmdBufBindColorWriteState(frame.cmd_buf, &colorWriteState);
-                dkCmdBufDraw(frame.cmd_buf, DkPrimitive_Triangles, 3, 1, 0, 0);
+                cmd_list_clear_color(frame.cmd_buf, app->applet_mode == AppletOperationMode_Console ? HMM_V3(0.0f, 0.0f, 0.0f) : HMM_V3(1.0f, 1.0f, 1.0f), 0);
+                cmd_list_bind_gfx_pipeline(frame.cmd_buf, &app->tri_pipeline);
+                cmd_list_draw(frame.cmd_buf, DkPrimitive_Triangles, 3);
             }
             gpu_end(&app->gpu, &frame);
             gpu_present(&app->gpu);

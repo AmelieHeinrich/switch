@@ -14,6 +14,8 @@
 #include "input.h"
 #include "arena.h"
 #include "gpu.h"
+#include "cmd_list.h"
+#include "gfx_pipeline.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -35,8 +37,9 @@ typedef struct app_t {
     // @note(ame): Engine
     i32 nxlink_sock;
     gpu_t gpu;
-    DkShader vert;
-    DkShader frag;
+    
+    // @note(ame): renderer
+    gfx_pipeline_t tri_pipeline;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);
