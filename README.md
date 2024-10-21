@@ -17,3 +17,23 @@ And that's it! Launch the .nro file using your emulator of choice or by dumping 
     - Ryujinx (r.b4cac89)
     - Suyu (dev-0de49070e4)
     - Yuzu (master-67bc8a6de)
+
+## Roadmap
+
+- Offset allocator for CPU/GPU memory arenas
+- GPU buffers
+- Pipeline vertex input states
+- Draw a quad
+- Make a first person camera
+- GPU textures
+- Loading a .png texture
+- GPU mipmaps
+- Loading a .gltf mesh
+- GUI solution (cimgui? nuklear?)
+- Physically based rendering + IBL
+- Deferred
+- Compress textures to BC7
+- Stress test using bistro
+- Shadows
+- TAA
+- Bloom
