@@ -75,7 +75,11 @@ void app_run(app_t *app)
                 dkCmdBufSetViewports(frame.cmd_buf, 0, &viewport, 1);
                 dkCmdBufSetScissors(frame.cmd_buf, 0, &scissor, 1);
                 dkCmdBufBindRenderTarget(frame.cmd_buf, &frame.backbuffer_view, NULL);
-                dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 0.0f, 0.0f, 0.0f, 1.0f);
+                if (app->applet_mode == AppletOperationMode_Console) {
+                    dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 0.0f, 0.0f, 0.0f, 1.0f);
+                } else {
+                    dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 1.0f, 1.0f, 1.0f, 1.0f);
+                }
                 dkCmdBufBindShaders(frame.cmd_buf, DkStageFlag_GraphicsMask, shaders, 2);
                 dkCmdBufBindRasterizerState(frame.cmd_buf, &rasterizerState);
                 dkCmdBufBindColorState(frame.cmd_buf, &colorState);
