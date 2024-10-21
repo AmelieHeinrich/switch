@@ -50,6 +50,12 @@ void app_run(app_t *app)
         if (pad_down(&app->curr_pad, HidNpadButton_Plus))
             break;
 
+        // @note(ame): MAIN RENDER LOOP
+        if (!app->config->print_to_fb) {
+            gpu_begin(&app->gpu);
+            gpu_present(&app->gpu);
+        }
+
         // @note(ame): Push console fb to next frame
         if (app->config->print_to_fb)
             consoleUpdate(NULL);

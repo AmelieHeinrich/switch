@@ -31,6 +31,7 @@ typedef struct gpu_t {
     u32 width;
     u32 height;
     u32 fb_count;
+    i32 curr_frame;
 
     // @note(ame): internals
     DkDevice device;
@@ -43,7 +44,10 @@ typedef struct gpu_t {
 } gpu_t;
 
 void gpu_init(gpu_t *gpu, gpu_config_t *config);
-void gpu_resize(gpu_t *gpu, AppletOperationMode mode);
 void gpu_exit(gpu_t *gpu);
+void gpu_resize(gpu_t *gpu, AppletOperationMode mode);
+
+void gpu_begin(gpu_t *gpu);
+void gpu_present(gpu_t *gpu);
 
 #endif

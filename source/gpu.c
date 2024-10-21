@@ -85,3 +85,13 @@ void gpu_exit(gpu_t *gpu)
     arena_free(&gpu->swapchain_arena);
     dkDeviceDestroy(gpu->device);
 }
+
+void gpu_begin(gpu_t *gpu)
+{
+    gpu->curr_frame = dkQueueAcquireImage(gpu->queue, gpu->swapchain);
+}
+
+void gpu_present(gpu_t *gpu)
+{
+    dkQueuePresentImage(gpu->queue, gpu->swapchain, gpu->curr_frame);
+}
