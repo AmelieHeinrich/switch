@@ -25,7 +25,7 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     DkImageLayoutMaker fb_maker;
     dkImageLayoutMakerDefaults(&fb_maker, gpu->device);
     fb_maker.flags = DkImageFlags_UsageRender | DkImageFlags_UsagePresent | DkImageFlags_HwCompression;
-    fb_maker.format = DkImageFormat_RGBA8_Unorm;
+    fb_maker.format = DkImageFormat_BGRA8_Unorm_sRGB;
     fb_maker.dimensions[0] = gpu->width;
     fb_maker.dimensions[1] = gpu->height;
 
@@ -86,8 +86,44 @@ void gpu_resize(gpu_t *gpu, AppletOperationMode mode)
             break;
         };
     }
-    
+
+    if (!gpu->swapchain) return;
+
+    dkQueueWaitIdle(gpu->queue);
+
     // @todo(ame): resize
+    dkSwapchainDestroy(gpu->swapchain);
+
+    // @note(ame): allocate framebuffers
+    DkImageLayoutMaker fb_maker;
+    dkImageLayoutMakerDefaults(&fb_maker, gpu->device);
+    fb_maker.flags = DkImageFlags_UsageRender | DkImageFlags_UsagePresent | DkImageFlags_HwCompression;
+    fb_maker.format = DkImageFormat_BGRA8_Unorm_sRGB;
+    fb_maker.dimensions[0] = gpu->width;
+    fb_maker.dimensions[1] = gpu->height;
+
+    // @note(ame): Initialize swapchain layout
+    DkImageLayout fb_layout;
+    dkImageLayoutInitialize(&fb_layout, &fb_maker);
+
+    // @note(ame): Get framebuffer size & alignment
+    u32 fb_size = dkImageLayoutGetSize(&fb_layout);
+    u32 fb_align = dkImageLayoutGetAlignment(&fb_layout);
+    fb_size = (fb_size + fb_align - 1) &~ (fb_align - 1);
+
+    // @note(ame): allocate back buffers
+    DkImage const* swapchain_images[DEFAULT_GPU_FB_COUNT];
+    for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
+        swapchain_images[i] = &gpu->fbs[i];
+        dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_arena.gpu_block, i * fb_size);
+
+        dkImageViewDefaults(&gpu->image_views[i], &gpu->fbs[i]);
+    }
+
+    // @note(ame): swapchain creation
+    DkSwapchainMaker swap_maker;
+    dkSwapchainMakerDefaults(&swap_maker, gpu->device, nwindowGetDefault(), swapchain_images, DEFAULT_GPU_FB_COUNT);
+    gpu->swapchain = dkSwapchainCreate(&swap_maker);
 }
 
 void gpu_exit(gpu_t *gpu)
