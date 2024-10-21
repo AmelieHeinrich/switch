@@ -54,7 +54,11 @@ void app_run(app_t *app)
         if (!app->config->print_to_fb) {
             frame_t frame = gpu_begin(&app->gpu);
             dkCmdBufBindRenderTarget(frame.cmd_buf, &frame.backbuffer_view, NULL);
-            dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 0.125f, 0.294f, 0.478f, 1.0f);
+            if (app->applet_mode == AppletOperationMode_Console) {
+                dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 0.125f, 0.294f, 0.478f, 1.0f);
+            } else {
+                dkCmdBufClearColorFloat(frame.cmd_buf, 0, DkColorMask_RGBA, 0.125f, 0.478f, 0.294f, 1.0f);
+            }
             gpu_end(&app->gpu, &frame);
 
             gpu_present(&app->gpu);

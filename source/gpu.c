@@ -83,6 +83,8 @@ void gpu_resize(gpu_t *gpu, AppletOperationMode mode)
             break;
         };
     }
+    
+    // @todo(ame): resize
 }
 
 void gpu_exit(gpu_t *gpu)

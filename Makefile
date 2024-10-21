@@ -45,7 +45,7 @@ INCLUDES	:=	include
 APP_TITLE   :=  switch_engine
 APP_AUTHOR  :=  amelieheinrich
 APP_VERSION :=  0.0.1
-#ROMFS	:=	romfs
+ROMFS		:=	romfs
 
 #---------------------------------------------------------------------------------
 # options for code generation
