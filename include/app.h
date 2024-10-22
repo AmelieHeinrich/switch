@@ -17,7 +17,8 @@
 #include "cmd_list.h"
 #include "gfx_pipeline.h"
 #include "buffer.h"
-
+#include "texture.h"
+#include "bitmap.h"
 #include "camera.h"
 
 typedef struct app_config_t {
@@ -48,6 +49,7 @@ typedef struct app_t {
     buffer_t vertex_buffer;
     buffer_t index_buffer;
     buffer_t color_buffer[DEFAULT_GPU_FB_COUNT];
+    texture_t my_texture;
 
     camera_t camera;
 } app_t;

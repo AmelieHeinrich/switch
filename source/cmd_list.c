@@ -6,6 +6,33 @@
 
 #include "cmd_list.h"
 
+cmd_list_single_use_t cmd_list_begin_single_use(DkDevice device, heap_t *heap)
+{
+    DkCmdBufMaker maker;
+    dkCmdBufMakerDefaults(&maker, device);
+    DkCmdBuf buf = dkCmdBufCreate(&maker);
+
+    heap_alloc_t alloc = heap_alloc(heap, KILOBYTES(8));
+    dkCmdBufAddMemory(buf, heap->block, alloc.offset, alloc.size);
+
+    return (cmd_list_single_use_t){
+        .alloc = alloc,
+        .buf = buf,
+        .parent_heap = heap
+    };
+}
+
+void cmd_list_end_single_use(cmd_list_single_use_t *buf, DkQueue queue)
+{
+    dkQueueSubmitCommands(queue, dkCmdBufFinishList(buf->buf));
+}
+
+void cmd_list_free_single_use(cmd_list_single_use_t *buf)
+{
+    heap_dealloc(buf->parent_heap, &buf->alloc);
+    dkCmdBufDestroy(buf->buf);
+}
+
 void cmd_list_viewport_scissor(DkCmdBuf buf, f32 x, f32 y)
 {
     DkViewport viewport = { 0.0f, 0.0f, (float)x, (float)y, 0.0f, 1.0f };
@@ -44,6 +71,25 @@ void cmd_list_bind_uni_buffer(DkCmdBuf buf, buffer_t *buffer, u32 idx, DkStage s
 void cmd_list_draw(DkCmdBuf buf, DkPrimitive prim, u32 vtx)
 {
     dkCmdBufDraw(buf, prim, vtx, 1, 0, 0);
+}
+
+void cmd_list_copy_buffer_to_texture(DkCmdBuf buf, buffer_t *src, texture_t *dst)
+{
+    DkCopyBuf copy;
+    copy.addr = src->mem.gpu_addr;
+    copy.imageHeight = 0;
+    copy.rowLength = 0;
+
+    DkImageRect dest = {
+        .x = 0,
+        .y = 0,
+        .z = 0,
+        .width = dst->width,
+        .height = dst->height,
+        .depth = 1
+    };
+
+    dkCmdBufCopyBufferToImage(buf, &copy, &dst->image_view, &dest, 0);
 }
 
 void cmd_list_draw_indexed(DkCmdBuf buf, DkPrimitive prim, u32 idx)

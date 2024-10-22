@@ -44,6 +44,7 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     heap_init(&gpu->cmd_heap, CMD_ARENA_SIZE, DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, gpu->device);
     heap_init(&gpu->data_heap, DATA_ARENA_SIZE, DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, gpu->device);
     heap_init(&gpu->uniform_heap, UNIFORM_ARENA_SIZE, DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, gpu->device);
+    heap_init(&gpu->image_heap, IMAGE_ARENA_SIZE, DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, gpu->device);
 
     // @note(ame): allocate back buffers
     DkImage const* swapchain_images[DEFAULT_GPU_FB_COUNT];
@@ -134,9 +135,14 @@ void gpu_resize(gpu_t *gpu, AppletOperationMode mode)
     gpu->swapchain = dkSwapchainCreate(&swap_maker);
 }
 
-void gpu_exit(gpu_t *gpu)
+void gpu_wait(gpu_t *gpu)
 {
     dkQueueWaitIdle(gpu->queue);
+}
+
+void gpu_exit(gpu_t *gpu)
+{
+    gpu_wait(gpu);
 
     shader_loader_free(&gpu->shader_loader);
     
@@ -148,6 +154,7 @@ void gpu_exit(gpu_t *gpu)
     dkQueueDestroy(gpu->queue);
     dkSwapchainDestroy(gpu->swapchain);
 
+    heap_free(&gpu->image_heap);
     heap_free(&gpu->uniform_heap);
     heap_free(&gpu->data_heap);
     heap_free(&gpu->cmd_heap);

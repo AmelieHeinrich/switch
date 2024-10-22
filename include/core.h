@@ -8,6 +8,7 @@
 #define CORE_H_
 
 #include <HandmadeMath.h>
+#include <switch.h>
 
 typedef char i8;
 typedef short i16;

@@ -20,7 +20,6 @@ And that's it! Launch the .nro file using your emulator of choice or by dumping 
 
 ## Roadmap
 
-- Make a first person camera
 - GPU textures
 - Loading a .png texture
 - GPU mipmaps

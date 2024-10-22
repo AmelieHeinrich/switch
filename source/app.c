@@ -5,6 +5,7 @@
 //
 
 #include "app.h"
+#include "util.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -71,6 +72,25 @@ void app_init(app_t *app, app_config_t *config)
     camera_init(&app->camera);
     camera_resize(&app->camera, app->applet_mode == AppletOperationMode_Console ? DOCKED_WIDTH : UNDOCKED_WIDTH,
                                 app->applet_mode == AppletOperationMode_Console ? DOCKED_HEIGHT : UNDOCKED_HEIGHT);
+    
+    // @note(ame): texture creation
+    bitmap_t bitmap = bitmap_load("romfs:/assets/textures/texture.jpg");
+    texture_init(&app->my_texture, bitmap.width, bitmap.height, DkImageFormat_RGBA8_Unorm, &app->gpu.image_heap, app->gpu.device);
+
+    buffer_t staging;
+    buffer_init(&staging, &app->gpu.data_heap, app->my_texture.size, 0);
+    buffer_upload(&staging, bitmap.pixels, app->my_texture.size);
+
+    cmd_list_single_use_t uploader = cmd_list_begin_single_use(app->gpu.device, &app->gpu.cmd_heap);
+    cmd_list_copy_buffer_to_texture(uploader.buf, &staging, &app->my_texture);
+    cmd_list_end_single_use(&uploader, app->gpu.queue);
+
+    gpu_wait(&app->gpu);
+
+    // @note(ame): cleanup
+    cmd_list_free_single_use(&uploader);
+    buffer_free(&staging);
+    bitmap_free(&bitmap);
 }
 
 void app_run(app_t *app)
@@ -124,6 +144,9 @@ void app_run(app_t *app)
 
 void app_exit(app_t *app)
 {
+    gpu_wait(&app->gpu);
+
+    texture_free(&app->my_texture);
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         buffer_free(&app->color_buffer[i]);
     }

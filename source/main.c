@@ -4,6 +4,8 @@
 // $Create Time: 2024-10-20 16:16:57
 //
 
+#include "ext_compilation/ext_unit.c"
+
 #include "app.h"
 #include "util.h"
 
