@@ -47,10 +47,10 @@ void app_init(app_t *app, app_config_t *config)
     gfx_pipeline_init(&app->tri_pipeline, &app->gpu, "romfs:/shaders/tri_vsh.dksh", "romfs:/shaders/tri_fsh.dksh");
 
     vertex_t vertices[] = {
-        (vertex_t){ .pos = { 0.5, 0.5, 0.0}, .col = {1.0f, 0.0f, 0.0f} },
-        (vertex_t){ .pos = { 0.5,-0.5, 0.0}, .col = {0.0f, 1.0f, 0.0f} },
-        (vertex_t){ .pos = {-0.5,-0.5, 0.0}, .col = {0.0f, 0.0f, 1.0f} },
-        (vertex_t){ .pos = {-0.5, 0.5, 0.0}, .col = {1.0f, 0.0f, 1.0f} },
+        (vertex_t){ .pos = { 0.5, 0.5, 0.0}, .col = {1.0f, 1.0f, 0.0f} },
+        (vertex_t){ .pos = { 0.5,-0.5, 0.0}, .col = {1.0f, 0.0f, 0.0f} },
+        (vertex_t){ .pos = {-0.5,-0.5, 0.0}, .col = {0.0f, 0.0f, 0.0f} },
+        (vertex_t){ .pos = {-0.5, 0.5, 0.0}, .col = {0.0f, 1.0f, 0.0f} },
     };
 
     u32 indices[] = {
@@ -86,6 +86,11 @@ void app_init(app_t *app, app_config_t *config)
     cmd_list_end_single_use(&uploader, app->gpu.queue);
 
     gpu_wait(&app->gpu);
+
+    // @note(ame): dset and sampler
+    app->my_sampler = sampler_init(DkFilter_Linear, DkWrapMode_ClampToEdge);
+    app->image_set = descriptor_set_init(&app->gpu.descriptor_heap, 1);
+    app->sampler_set = descriptor_set_init(&app->gpu.descriptor_heap, 1);
 
     // @note(ame): cleanup
     cmd_list_free_single_use(&uploader);
@@ -128,9 +133,18 @@ void app_run(app_t *app)
                 buffer_upload(&app->color_buffer[frame.frame_idx], matrices, sizeof(matrices));
 
                 cmd_list_viewport_scissor(frame.cmd_buf, (float)app->gpu.width, (float)app->gpu.height);
+                
                 dkCmdBufBindRenderTarget(frame.cmd_buf, &frame.backbuffer_view, NULL);
                 cmd_list_clear_color(frame.cmd_buf, app->applet_mode == AppletOperationMode_Console ? HMM_V3(0.0f, 0.0f, 0.0f) : HMM_V3(1.0f, 1.0f, 1.0f), 0);
+                
                 cmd_list_bind_gfx_pipeline(frame.cmd_buf, &app->tri_pipeline);
+
+                cmd_list_dset_write_texture(frame.cmd_buf, &app->image_set, &app->my_texture, 0);
+                cmd_list_dset_write_sampler(frame.cmd_buf, &app->sampler_set, &app->my_sampler, 0);
+                cmd_list_bind_image_dset(frame.cmd_buf, &app->image_set);
+                cmd_list_bind_sampler_dset(frame.cmd_buf, &app->sampler_set);
+                cmd_list_bind_texture(frame.cmd_buf, DkStage_Fragment, 0, 0);
+                
                 cmd_list_bind_vtx_buffer(frame.cmd_buf, &app->vertex_buffer);
                 cmd_list_bind_idx_buffer(frame.cmd_buf, &app->index_buffer);
                 cmd_list_bind_uni_buffer(frame.cmd_buf, &app->color_buffer[frame.frame_idx], 0, DkStage_Vertex);

@@ -117,3 +117,30 @@ void cmd_list_bind_gfx_pipeline(DkCmdBuf buf, gfx_pipeline_t *pipeline)
     dkCmdBufBindColorWriteState(buf, &colorWriteState);
     dkCmdBufBindVtxAttribState(buf, pipeline->states, pipeline->state_count);
 }
+
+void cmd_list_dset_write_texture(DkCmdBuf buf, descriptor_set_t *set, texture_t *texture, u32 idx)
+{
+    u32 aligned_size = ALIGN(sizeof(DkImageDescriptor), DK_IMAGE_DESCRIPTOR_ALIGNMENT);
+    dkCmdBufPushData(buf, set->mem.gpu_addr + (idx * aligned_size), &texture->descriptor, aligned_size);
+}
+
+void cmd_list_dset_write_sampler(DkCmdBuf buf, descriptor_set_t *set, sampler_t *sampler, u32 idx)
+{
+    u32 aligned_size = ALIGN(sizeof(DkImageDescriptor), DK_IMAGE_DESCRIPTOR_ALIGNMENT);
+    dkCmdBufPushData(buf, set->mem.gpu_addr + (idx * aligned_size), &sampler->descriptor, aligned_size);
+}
+
+void cmd_list_bind_image_dset(DkCmdBuf buf, descriptor_set_t *set)
+{
+    dkCmdBufBindImageDescriptorSet(buf, set->mem.gpu_addr, set->descriptor_count);
+}
+
+void cmd_list_bind_sampler_dset(DkCmdBuf buf, descriptor_set_t *set)
+{
+    dkCmdBufBindSamplerDescriptorSet(buf, set->mem.gpu_addr, set->descriptor_count);
+}
+
+void cmd_list_bind_texture(DkCmdBuf buf, DkStage stage, u32 txt_idx, u32 smp_idx)
+{
+    dkCmdBufBindTexture(buf, stage, 0, dkMakeTextureHandle(txt_idx, smp_idx));
+}

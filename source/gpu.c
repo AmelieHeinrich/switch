@@ -45,6 +45,7 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
     heap_init(&gpu->data_heap, DATA_ARENA_SIZE, DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, gpu->device);
     heap_init(&gpu->uniform_heap, UNIFORM_ARENA_SIZE, DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, gpu->device);
     heap_init(&gpu->image_heap, IMAGE_ARENA_SIZE, DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, gpu->device);
+    heap_init(&gpu->descriptor_heap, DESCRIPTOR_ARENA_SIZE, DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, gpu->device);
 
     // @note(ame): allocate back buffers
     DkImage const* swapchain_images[DEFAULT_GPU_FB_COUNT];
@@ -154,6 +155,7 @@ void gpu_exit(gpu_t *gpu)
     dkQueueDestroy(gpu->queue);
     dkSwapchainDestroy(gpu->swapchain);
 
+    heap_free(&gpu->descriptor_heap);
     heap_free(&gpu->image_heap);
     heap_free(&gpu->uniform_heap);
     heap_free(&gpu->data_heap);

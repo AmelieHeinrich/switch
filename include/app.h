@@ -20,6 +20,8 @@
 #include "texture.h"
 #include "bitmap.h"
 #include "camera.h"
+#include "sampler.h"
+#include "descriptor_set.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -50,6 +52,9 @@ typedef struct app_t {
     buffer_t index_buffer;
     buffer_t color_buffer[DEFAULT_GPU_FB_COUNT];
     texture_t my_texture;
+    sampler_t my_sampler;
+    descriptor_set_t image_set;
+    descriptor_set_t sampler_set;
 
     camera_t camera;
 } app_t;
