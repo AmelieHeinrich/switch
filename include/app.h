@@ -18,6 +18,8 @@
 #include "gfx_pipeline.h"
 #include "buffer.h"
 
+#include "camera.h"
+
 typedef struct app_config_t {
     b8 print_to_fb;
     b8 load_user_icon;
@@ -47,8 +49,7 @@ typedef struct app_t {
     buffer_t index_buffer;
     buffer_t color_buffer[DEFAULT_GPU_FB_COUNT];
 
-    HMM_Mat4 camera;
-    f32 z;
+    camera_t camera;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);

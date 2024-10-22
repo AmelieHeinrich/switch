@@ -7,6 +7,8 @@
 #ifndef CORE_H_
 #define CORE_H_
 
+#include <HandmadeMath.h>
+
 typedef char i8;
 typedef short i16;
 typedef int i32;

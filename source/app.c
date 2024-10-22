@@ -66,9 +66,11 @@ void app_init(app_t *app, app_config_t *config)
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         buffer_init(&app->color_buffer[i], &app->gpu.uniform_heap, 256, 0);
     }
-    app->z = -1.0f;
 
     timer_init(&app->dt_timer);
+    camera_init(&app->camera);
+    camera_resize(&app->camera, app->applet_mode == AppletOperationMode_Console ? DOCKED_WIDTH : UNDOCKED_WIDTH,
+                                app->applet_mode == AppletOperationMode_Console ? DOCKED_HEIGHT : UNDOCKED_HEIGHT);
 }
 
 void app_run(app_t *app)
@@ -81,7 +83,11 @@ void app_run(app_t *app)
         // @note(ame): Resize
         AppletOperationMode mode = appletGetOperationMode();
         if (mode != app->applet_mode) {
+            i32 w = mode == AppletOperationMode_Console ? DOCKED_WIDTH : UNDOCKED_WIDTH;
+            i32 h = mode == AppletOperationMode_Console ? DOCKED_HEIGHT : UNDOCKED_HEIGHT;
+
             gpu_resize(&app->gpu, mode);
+            camera_resize(&app->camera, w, h);
             app->applet_mode = mode;
         }
 
@@ -90,19 +96,16 @@ void app_run(app_t *app)
         if (pad_down(&app->curr_pad, HidNpadButton_Plus))
             break;
 
-        i32 x, y;
-        pad_get_lstick(&app->curr_pad, &x, &y);
-
-        app->z += y / 32766.0;
+        // @note(ame): Update camera
+        camera_update(&app->camera);
+        camera_input(&app->camera, &app->curr_pad);
 
         // @note(ame): MAIN RENDER LOOP
         if (!app->config->print_to_fb) {
             frame_t frame = gpu_begin(&app->gpu);
             {
-                app->camera = HMM_MulM4(HMM_Perspective_LH_ZO(HMM_ToRad(90.0f), (f32)app->gpu.width / (f32)app->gpu.height, 0.001f, 10000.0f),
-                                    HMM_LookAt_LH(HMM_V3(0.0f, 0.0f, app->z), HMM_V3(0.0f, 0.0f, 0.0f), HMM_V3(0.0f, 1.0f, 0.0f)));
-
-                buffer_upload(&app->color_buffer[frame.frame_idx], &app->camera, sizeof(HMM_Mat4));
+                HMM_Mat4 matrices[] = { app->camera.projection, app->camera.view };
+                buffer_upload(&app->color_buffer[frame.frame_idx], matrices, sizeof(matrices));
 
                 cmd_list_viewport_scissor(frame.cmd_buf, (float)app->gpu.width, (float)app->gpu.height);
                 dkCmdBufBindRenderTarget(frame.cmd_buf, &frame.backbuffer_view, NULL);

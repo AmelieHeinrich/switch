@@ -30,13 +30,13 @@ void pad_update(pad_t *pad)
     pad->rstick = padGetStickPos(&pad->pad, 1);
 
     // @note(ame): apply deadzones
-    if (pad->lstick.x > 0 && pad->lstick.x <= 300)
+    if (pad->lstick.x > 0 && pad->lstick.x <= 3000)
         pad->lstick.x = 0;
-    if (pad->lstick.y > 0 && pad->lstick.y <= 300)
+    if (pad->lstick.y > 0 && pad->lstick.y <= 3000)
         pad->lstick.y = 0;
-    if (pad->rstick.x > 0 && pad->rstick.x <= 300)
+    if (pad->rstick.x > 0 && pad->rstick.x <= 3000)
         pad->rstick.x = 0;
-    if (pad->rstick.y > 0 && pad->rstick.y <= 300)
+    if (pad->rstick.y > 0 && pad->rstick.y <= 3000)
         pad->rstick.y = 0;
 }
 
