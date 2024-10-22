@@ -20,9 +20,6 @@ And that's it! Launch the .nro file using your emulator of choice or by dumping 
 
 ## Roadmap
 
-- GPU buffers
-- Pipeline vertex input states
-- Draw a quad
 - Make a first person camera
 - GPU textures
 - Loading a .png texture

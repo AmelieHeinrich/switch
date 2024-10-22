@@ -18,6 +18,7 @@ void cmd_list_viewport_scissor(DkCmdBuf buf, f32 w, f32 h);
 
 void cmd_list_bind_vtx_buffer(DkCmdBuf buf, buffer_t *buffer);
 void cmd_list_bind_idx_buffer(DkCmdBuf buf, buffer_t *buffer);
+void cmd_list_bind_uni_buffer(DkCmdBuf buf, buffer_t *buffer, u32 idx, DkStage stage);
 void cmd_list_bind_gfx_pipeline(DkCmdBuf buf, gfx_pipeline_t *pipeline);
 
 void cmd_list_clear_color(DkCmdBuf buf, HMM_Vec3 col, u32 idx);

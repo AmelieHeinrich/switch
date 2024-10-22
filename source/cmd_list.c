@@ -36,6 +36,11 @@ void cmd_list_bind_idx_buffer(DkCmdBuf buf, buffer_t *buffer)
     dkCmdBufBindIdxBuffer(buf, DkIdxFormat_Uint32, buffer->mem.gpu_addr);
 }
 
+void cmd_list_bind_uni_buffer(DkCmdBuf buf, buffer_t *buffer, u32 idx, DkStage stage)
+{
+    dkCmdBufBindUniformBuffer(buf, stage, idx, buffer->mem.gpu_addr, buffer->mem.size);
+}
+
 void cmd_list_draw(DkCmdBuf buf, DkPrimitive prim, u32 vtx)
 {
     dkCmdBufDraw(buf, prim, vtx, 1, 0, 0);

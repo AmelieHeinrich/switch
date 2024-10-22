@@ -4,6 +4,8 @@
 // $Create Time: 2024-10-20 17:54:14
 //
 
+#include <string.h>
+
 #include "input.h"
 
 void input_init(u32 pad_count)
@@ -26,6 +28,16 @@ void pad_update(pad_t *pad)
 
     pad->lstick = padGetStickPos(&pad->pad, 0);
     pad->rstick = padGetStickPos(&pad->pad, 1);
+
+    // @note(ame): apply deadzones
+    if (pad->lstick.x > 0 && pad->lstick.x <= 300)
+        pad->lstick.x = 0;
+    if (pad->lstick.y > 0 && pad->lstick.y <= 300)
+        pad->lstick.y = 0;
+    if (pad->rstick.x > 0 && pad->rstick.x <= 300)
+        pad->rstick.x = 0;
+    if (pad->rstick.y > 0 && pad->rstick.y <= 300)
+        pad->rstick.y = 0;
 }
 
 b8 pad_down(pad_t *pad, u64 bid)

@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <math.h>
+#include <string.h>
 
 typedef struct vertex_t {
     HMM_Vec3 pos;
@@ -60,6 +62,13 @@ void app_init(app_t *app, app_config_t *config)
 
     buffer_init(&app->index_buffer, &app->gpu.data_heap, sizeof(indices), sizeof(u32));
     buffer_upload(&app->index_buffer, indices, sizeof(indices));
+
+    for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
+        buffer_init(&app->color_buffer[i], &app->gpu.uniform_heap, 256, 0);
+    }
+    app->z = -1.0f;
+
+    timer_init(&app->dt_timer);
 }
 
 void app_run(app_t *app)
@@ -81,30 +90,41 @@ void app_run(app_t *app)
         if (pad_down(&app->curr_pad, HidNpadButton_Plus))
             break;
 
+        i32 x, y;
+        pad_get_lstick(&app->curr_pad, &x, &y);
+
+        app->z += y / 32766.0;
+
         // @note(ame): MAIN RENDER LOOP
         if (!app->config->print_to_fb) {
             frame_t frame = gpu_begin(&app->gpu);
             {
+                app->camera = HMM_MulM4(HMM_Perspective_LH_ZO(HMM_ToRad(90.0f), (f32)app->gpu.width / (f32)app->gpu.height, 0.001f, 10000.0f),
+                                    HMM_LookAt_LH(HMM_V3(0.0f, 0.0f, app->z), HMM_V3(0.0f, 0.0f, 0.0f), HMM_V3(0.0f, 1.0f, 0.0f)));
+
+                buffer_upload(&app->color_buffer[frame.frame_idx], &app->camera, sizeof(HMM_Mat4));
+
                 cmd_list_viewport_scissor(frame.cmd_buf, (float)app->gpu.width, (float)app->gpu.height);
                 dkCmdBufBindRenderTarget(frame.cmd_buf, &frame.backbuffer_view, NULL);
                 cmd_list_clear_color(frame.cmd_buf, app->applet_mode == AppletOperationMode_Console ? HMM_V3(0.0f, 0.0f, 0.0f) : HMM_V3(1.0f, 1.0f, 1.0f), 0);
                 cmd_list_bind_gfx_pipeline(frame.cmd_buf, &app->tri_pipeline);
                 cmd_list_bind_vtx_buffer(frame.cmd_buf, &app->vertex_buffer);
                 cmd_list_bind_idx_buffer(frame.cmd_buf, &app->index_buffer);
+                cmd_list_bind_uni_buffer(frame.cmd_buf, &app->color_buffer[frame.frame_idx], 0, DkStage_Vertex);
                 cmd_list_draw_indexed(frame.cmd_buf, DkPrimitive_Triangles, 6);
             }
             gpu_end(&app->gpu, &frame);
             gpu_present(&app->gpu);
         }
-
-        // @note(ame): Push console fb to next frame
-        if (app->config->print_to_fb)
-            consoleUpdate(NULL);
     }
 }
 
 void app_exit(app_t *app)
 {
+    for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
+        buffer_free(&app->color_buffer[i]);
+    }
+    buffer_free(&app->index_buffer);
     buffer_free(&app->vertex_buffer);
     gpu_exit(&app->gpu);
     if (app->config->print_to_fb)

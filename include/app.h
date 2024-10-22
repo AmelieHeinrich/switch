@@ -11,6 +11,7 @@
 
 #include "core.h"
 #include "user.h"
+#include "timer.h"
 #include "input.h"
 #include "gpu.h"
 #include "cmd_list.h"
@@ -37,11 +38,17 @@ typedef struct app_t {
     // @note(ame): Engine
     i32 nxlink_sock;
     gpu_t gpu;
+    stimer_t dt_timer;
+    f32 last;
     
     // @note(ame): renderer
     gfx_pipeline_t tri_pipeline;
     buffer_t vertex_buffer;
     buffer_t index_buffer;
+    buffer_t color_buffer[DEFAULT_GPU_FB_COUNT];
+
+    HMM_Mat4 camera;
+    f32 z;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);

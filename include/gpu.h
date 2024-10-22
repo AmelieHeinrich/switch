@@ -24,6 +24,7 @@
 
 #define CMD_ARENA_SIZE KILOBYTES(128)
 #define DATA_ARENA_SIZE MEGABYTES(256)
+#define UNIFORM_ARENA_SIZE MEGABYTES(8)
 
 typedef struct gpu_config_t {
     AppletOperationMode mode;
@@ -32,6 +33,7 @@ typedef struct gpu_config_t {
 typedef struct frame_t {
     DkImageView backbuffer_view;
     DkCmdBuf cmd_buf;
+    u32 frame_idx;
 } frame_t;
 
 typedef struct gpu_t {
@@ -57,6 +59,7 @@ typedef struct gpu_t {
     heap_t swapchain_heap;
     heap_t cmd_heap;
     heap_t data_heap; // for buffers, textures and whatnot
+    heap_t uniform_heap; // for uniform buffers that need their stupid alignment
 } gpu_t;
 
 void gpu_init(gpu_t *gpu, gpu_config_t *config);

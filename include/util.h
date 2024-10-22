@@ -8,6 +8,9 @@
 #define UTIL_H_
 
 #include <switch.h>
+#include <HandmadeMath.h>
+
+#include "core.h"
 
 void throw_error(const char* title, const char* message, int error_code);
 
