@@ -9,4 +9,4 @@ if not exist romfs (
     mkdir romfs
 )
 
-cp -r assets romfs/assets
+cp -r assets romfs/

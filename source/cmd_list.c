@@ -92,6 +92,16 @@ void cmd_list_copy_buffer_to_texture(DkCmdBuf buf, buffer_t *src, texture_t *dst
     dkCmdBufCopyBufferToImage(buf, &copy, &dst->image_view, &dest, 0);
 }
 
+void cmd_list_bind_render_targets(DkCmdBuf buf, texture_t *textures[], u32 texture_count, texture_t *depth_texture)
+{
+    DkImageView const *targets[32];
+    for (i32 i = 0; i < texture_count; i++) {
+        targets[i] = &textures[i]->image_view;
+    }
+
+    dkCmdBufBindRenderTargets(buf, targets, texture_count, (depth_texture != NULL) ? &depth_texture->image_view : NULL);
+}
+
 void cmd_list_draw_indexed(DkCmdBuf buf, DkPrimitive prim, u32 idx)
 {
     dkCmdBufDrawIndexed(buf, prim, idx, 1, 0, 0, 0);
@@ -103,11 +113,13 @@ void cmd_list_bind_gfx_pipeline(DkCmdBuf buf, gfx_pipeline_t *pipeline)
     DkRasterizerState rasterizerState;
     DkColorState colorState;
     DkColorWriteState colorWriteState;
+    DkDepthStencilState depthStencilState;
 
     // Initialize state structs with the deko3d defaults
     dkRasterizerStateDefaults(&rasterizerState);
     dkColorStateDefaults(&colorState);
     dkColorWriteStateDefaults(&colorWriteState);
+    dkDepthStencilStateDefaults(&depthStencilState);
 
     rasterizerState.cullMode = DkFace_None;
 
@@ -115,6 +127,7 @@ void cmd_list_bind_gfx_pipeline(DkCmdBuf buf, gfx_pipeline_t *pipeline)
     dkCmdBufBindRasterizerState(buf, &rasterizerState);
     dkCmdBufBindColorState(buf, &colorState);
     dkCmdBufBindColorWriteState(buf, &colorWriteState);
+    dkCmdBufBindDepthStencilState(buf, &depthStencilState);
     dkCmdBufBindVtxAttribState(buf, pipeline->states, pipeline->state_count);
 }
 
@@ -143,4 +156,9 @@ void cmd_list_bind_sampler_dset(DkCmdBuf buf, descriptor_set_t *set)
 void cmd_list_bind_texture(DkCmdBuf buf, DkStage stage, u32 txt_idx, u32 smp_idx)
 {
     dkCmdBufBindTexture(buf, stage, 0, dkMakeTextureHandle(txt_idx, smp_idx));
+}
+
+void cmd_list_clear_depth(DkCmdBuf buf)
+{
+    dkCmdBufClearDepthStencil(buf, true, 1.0f, 0, 0);
 }

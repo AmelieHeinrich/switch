@@ -14,6 +14,7 @@
 #include "heap.h"
 #include "cmd_mem_ring.h"
 #include "shader_loader.h"
+#include "texture.h"
 
 #define DEFAULT_GPU_FB_COUNT 2
 
@@ -33,7 +34,7 @@ typedef struct gpu_config_t {
 } gpu_config_t;
 
 typedef struct frame_t {
-    DkImageView backbuffer_view;
+    texture_t *backbuffer;
     DkCmdBuf cmd_buf;
     u32 frame_idx;
 } frame_t;
@@ -53,6 +54,7 @@ typedef struct gpu_t {
 
     // @note(ame): frame dependent
     cmd_mem_ring_t cmd_ring;
+    texture_t wrappers[DEFAULT_GPU_FB_COUNT];
     DkImage fbs[DEFAULT_GPU_FB_COUNT];
     DkImageView image_views[DEFAULT_GPU_FB_COUNT];
     DkCmdBuf cmd_bufs[DEFAULT_GPU_FB_COUNT];

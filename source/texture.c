@@ -7,17 +7,18 @@
 #include "util.h"
 #include "texture.h"
 
-void texture_init(texture_t *texture, u32 width, u32 height, DkImageFormat format, heap_t *heap, DkDevice device)
+void texture_init(texture_t *texture, u32 width, u32 height, DkImageFormat format, heap_t *heap, DkDevice device, u32 flags)
 {
     texture->width = width;
     texture->height = height;
     texture->format = format;
     texture->parent_heap = heap;
+    texture->flags = flags;
 
     DkImageLayoutMaker maker;
     dkImageLayoutMakerDefaults(&maker, device);
     maker.format = format;
-    maker.flags = 0;
+    maker.flags = flags;
     maker.dimensions[0] = width;
     maker.dimensions[1] = height;
     dkImageLayoutInitialize(&texture->layout, &maker);

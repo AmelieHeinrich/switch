@@ -32,6 +32,7 @@ void cmd_list_free_single_use(cmd_list_single_use_t *buf);
 void cmd_list_viewport_scissor(DkCmdBuf buf, f32 w, f32 h);
 
 // bind
+void cmd_list_bind_render_targets(DkCmdBuf buf, texture_t *textures[], u32 texture_count, texture_t *depth_texture);
 void cmd_list_bind_vtx_buffer(DkCmdBuf buf, buffer_t *buffer);
 void cmd_list_bind_idx_buffer(DkCmdBuf buf, buffer_t *buffer);
 void cmd_list_bind_uni_buffer(DkCmdBuf buf, buffer_t *buffer, u32 idx, DkStage stage);
@@ -46,6 +47,7 @@ void cmd_list_dset_write_sampler(DkCmdBuf buf, descriptor_set_t *set, sampler_t 
 
 // clear
 void cmd_list_clear_color(DkCmdBuf buf, HMM_Vec3 col, u32 idx);
+void cmd_list_clear_depth(DkCmdBuf buf);
 
 // transfer
 void cmd_list_copy_buffer_to_texture(DkCmdBuf buf, buffer_t *src, texture_t *dst);

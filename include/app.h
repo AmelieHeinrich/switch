@@ -22,6 +22,7 @@
 #include "camera.h"
 #include "sampler.h"
 #include "descriptor_set.h"
+#include "model.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -48,8 +49,7 @@ typedef struct app_t {
     
     // @note(ame): renderer
     gfx_pipeline_t tri_pipeline;
-    buffer_t vertex_buffer;
-    buffer_t index_buffer;
+    model_t model;
     buffer_t color_buffer[DEFAULT_GPU_FB_COUNT];
     texture_t my_texture;
     sampler_t my_sampler;
@@ -57,6 +57,7 @@ typedef struct app_t {
     descriptor_set_t sampler_set;
 
     camera_t camera;
+    texture_t depth_target;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);

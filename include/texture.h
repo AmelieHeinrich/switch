@@ -32,7 +32,7 @@ typedef struct texture_t {
     heap_alloc_t alloc;
 } texture_t;
 
-void texture_init(texture_t *texture, u32 width, u32 height, DkImageFormat format, heap_t *heap, DkDevice device);
+void texture_init(texture_t *texture, u32 width, u32 height, DkImageFormat format, heap_t *heap, DkDevice device, u32 flags);
 void texture_free(texture_t *texture);
 
 #endif

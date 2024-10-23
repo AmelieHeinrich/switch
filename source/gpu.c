@@ -58,6 +58,9 @@ void gpu_init(gpu_t *gpu, gpu_config_t *config)
         gpu->cmd_bufs[i] = dkCmdBufCreate(&cmd_maker);
 
         dkImageViewDefaults(&gpu->image_views[i], &gpu->fbs[i]);
+
+        memcpy(&gpu->wrappers[i].image, &gpu->fbs[i], sizeof(DkImage));
+        memcpy(&gpu->wrappers[i].image_view, &gpu->image_views[i], sizeof(DkImageView));
     }
 
     // @note(ame): swapchain creation
@@ -128,6 +131,9 @@ void gpu_resize(gpu_t *gpu, AppletOperationMode mode)
         dkImageInitialize(&gpu->fbs[i], &fb_layout, gpu->swapchain_heap.block, i * fb_size);
 
         dkImageViewDefaults(&gpu->image_views[i], &gpu->fbs[i]);
+
+        memcpy(&gpu->wrappers[i].image, &gpu->fbs[i], sizeof(DkImage));
+        memcpy(&gpu->wrappers[i].image_view, &gpu->image_views[i], sizeof(DkImageView));
     }
 
     // @note(ame): swapchain creation
@@ -172,7 +178,7 @@ frame_t gpu_begin(gpu_t *gpu)
     cmd_mem_ring_begin(&gpu->cmd_ring, gpu->cmd_bufs[gpu->curr_frame]);
 
     return (frame_t){
-        .backbuffer_view = gpu->image_views[gpu->curr_frame],
+        .backbuffer = &gpu->wrappers[gpu->curr_frame],
         .cmd_buf = gpu->cmd_bufs[gpu->curr_frame],
         .frame_idx = gpu->curr_frame
     };
