@@ -38,6 +38,7 @@ void app_init(app_t *app, app_config_t *config)
     };
 
     user_collect_data(&app->curr_user, config->load_user_icon);
+    input_init(1);
     pad_init(&app->curr_pad);
     gpu_init(&app->gpu, &gpu_config);
 
