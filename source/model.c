@@ -64,6 +64,10 @@ void cgltf_process_primitive(cgltf_primitive* cgltf_primitive, u32* primitive_in
     buffer_init(&submesh->index_buffer, &gpu->data_heap, index_size, sizeof(u32));
     buffer_upload(&submesh->index_buffer, indices, index_size);
 
+    for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
+         buffer_init(&submesh->user_buffer[i], &gpu->uniform_heap, 512, 0);
+    }
+
     free(vertices);
     free(indices);
 }
@@ -86,7 +90,7 @@ void cgltf_process_node(cgltf_node *node, u32 *pi, model_t *m, gpu_t *gpu)
             pri_transform = HMM_MulM4(pri_transform, HMM_Scale(scale));
         }
 
-        pri_transform = HMM_MulM4(pri_transform, HMM_Rotate_LH(180.0f, HMM_V3(1.0f, 0.0f, 0.0f))); // Flip y-axis
+        pri_transform = HMM_MulM4(pri_transform, HMM_Rotate_LH(180.0f, HMM_V3(0.0f, 1.0f, 0.0f)));
 
         for (i32 p = 0; p < node->mesh->primitives_count; p++) {
             cgltf_process_primitive(&node->mesh->primitives[p], pi, m, pri_transform, gpu);
@@ -130,6 +134,9 @@ void model_load(model_t *model, gpu_t *gpu, const char *path)
 void model_free(model_t *model)
 {
     for (i32 i = 0; i < model->submesh_count; i++) {
+        for (i32 j = 0; j < DEFAULT_GPU_FB_COUNT; j++) {
+            buffer_free(&model->submeshes[i].user_buffer[j]);
+        }
         buffer_free(&model->submeshes[i].vertex_buffer);
         buffer_free(&model->submeshes[i].index_buffer);
     }

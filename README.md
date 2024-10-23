@@ -20,5 +20,6 @@ And that's it! Launch the .nro file using your emulator of choice or by dumping 
 
 ## Roadmap
 
-- Loading a .gltf mesh
+- Scene system & refactor
+- GLTF textures
 - GPU mipmaps

@@ -8,5 +8,5 @@ layout (binding = 0) uniform sampler2D texture0;
 
 void main()
 {
-    outColor = texture(texture0, fTexCoords);
+    outColor = texture(texture0, vec2(fTexCoords.x, 1.0 - fTexCoords.y));
 }

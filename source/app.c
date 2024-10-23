@@ -43,7 +43,7 @@ void app_init(app_t *app, app_config_t *config)
     app->tri_pipeline.state_count = 3;
     gfx_pipeline_init(&app->tri_pipeline, &app->gpu, "romfs:/shaders/tri_vsh.dksh", "romfs:/shaders/tri_fsh.dksh");
 
-    model_load(&app->model, &app->gpu, "romfs:/assets/models/Cube.gltf");
+    model_load(&app->model, &app->gpu, "romfs:/assets/models/scifi/SciFiHelmet.gltf");
 
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         buffer_init(&app->color_buffer[i], &app->gpu.uniform_heap, 256, 0);
@@ -57,7 +57,7 @@ void app_init(app_t *app, app_config_t *config)
     texture_init(&app->depth_target, app->gpu.width, app->gpu.height, DkImageFormat_ZF32, &app->gpu.image_heap, app->gpu.device, DkImageFlags_UsageRender | DkImageFlags_HwCompression);
 
     // @note(ame): texture creation
-    bitmap_t bitmap = bitmap_load("romfs:/assets/textures/texture.jpg");
+    bitmap_t bitmap = bitmap_load("romfs:/assets/models/scifi/SciFiHelmet_BaseColor.png");
     texture_init(&app->my_texture, bitmap.width, bitmap.height, DkImageFormat_RGBA8_Unorm, &app->gpu.image_heap, app->gpu.device, 0);
 
     buffer_t staging;
@@ -135,8 +135,11 @@ void app_run(app_t *app)
                 cmd_list_bind_texture(frame.cmd_buf, DkStage_Fragment, 0, 0);
                 cmd_list_bind_uni_buffer(frame.cmd_buf, &app->color_buffer[frame.frame_idx], 0, DkStage_Vertex);
                 for (int i = 0; i < app->model.submesh_count; i++) {
+                    buffer_upload(&app->model.submeshes[i].user_buffer[frame.frame_idx], &app->model.submeshes[i].transform, sizeof(HMM_Mat4));
+
                     cmd_list_bind_vtx_buffer(frame.cmd_buf, &app->model.submeshes[i].vertex_buffer);
                     cmd_list_bind_idx_buffer(frame.cmd_buf, &app->model.submeshes[i].index_buffer);
+                    cmd_list_bind_uni_buffer(frame.cmd_buf, &app->model.submeshes[i].user_buffer[frame.frame_idx], 1, DkStage_Vertex);
                     cmd_list_draw_indexed(frame.cmd_buf, DkPrimitive_Triangles, app->model.submeshes[i].index_count);
                 }
             }
