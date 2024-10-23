@@ -11,6 +11,7 @@
 #include "gpu.h"
 #include "buffer.h"
 #include "texture.h"
+#include "descriptor_set.h"
 
 #define MAX_SUBMESHES 512
 #define MAX_MATERIALS 512
@@ -24,6 +25,8 @@ typedef struct vertex_t {
 typedef struct material_t {
     b8 has_albedo;
     texture_t albedo;
+
+    descriptor_set_t set;
 } material_t;
 
 typedef struct submesh_t {

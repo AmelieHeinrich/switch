@@ -118,7 +118,6 @@ void app_run(app_t *app)
                 cmd_list_clear_depth(frame.cmd_buf);
                 cmd_list_bind_gfx_pipeline(frame.cmd_buf, &app->tri_pipeline);
                 cmd_list_dset_write_sampler(frame.cmd_buf, &app->sampler_set, &app->my_sampler, 0);
-                cmd_list_bind_image_dset(frame.cmd_buf, &app->image_set);
                 cmd_list_bind_sampler_dset(frame.cmd_buf, &app->sampler_set);
                 cmd_list_bind_uni_buffer(frame.cmd_buf, &app->color_buffer[frame.frame_idx], 0, DkStage_Vertex);
                 for (int i = app->model.submesh_count - 1; i >= 0; i--) {
@@ -126,10 +125,10 @@ void app_run(app_t *app)
                     material_t *material = &app->model.materials[submesh->mat_index];
                     buffer_upload(&submesh->user_buffer[frame.frame_idx], &submesh->transform, sizeof(HMM_Mat4));
 
-                    cmd_list_dset_write_texture(frame.cmd_buf, &app->image_set, &material->albedo, 0);
                     cmd_list_bind_vtx_buffer(frame.cmd_buf, &submesh->vertex_buffer);
                     cmd_list_bind_idx_buffer(frame.cmd_buf, &submesh->index_buffer);
                     cmd_list_bind_uni_buffer(frame.cmd_buf, &submesh->user_buffer[frame.frame_idx], 1, DkStage_Vertex);
+                    cmd_list_bind_image_dset(frame.cmd_buf, &material->set);
                     cmd_list_bind_texture(frame.cmd_buf, DkStage_Fragment, 0, 0);
                     cmd_list_draw_indexed(frame.cmd_buf, DkPrimitive_Triangles, submesh->index_count);
                 }

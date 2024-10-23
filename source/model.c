@@ -92,8 +92,11 @@ void cgltf_process_primitive(cgltf_primitive* cgltf_primitive, u32* primitive_in
         buffer_init(&albedo_staging, &gpu->data_heap, mat->albedo.size, 0);
         buffer_upload(&albedo_staging, albedo.pixels, mat->albedo.size);
 
+        mat->set = descriptor_set_init(&gpu->descriptor_heap, 1);
+
         cmd_list_single_use_t cmd = cmd_list_begin_single_use(gpu->device, &gpu->cmd_heap);
         cmd_list_copy_buffer_to_texture(cmd.buf, &albedo_staging, &mat->albedo);
+        cmd_list_dset_write_texture(cmd.buf, &mat->set, &mat->albedo, 0);
         cmd_list_end_single_use(&cmd, gpu->queue);
         gpu_wait(gpu);
 
@@ -181,6 +184,7 @@ void model_free(model_t *model)
     }
     for (i32 i = 0; i < model->material_count; i++) {
         if (model->materials[i].has_albedo) {
+            descriptor_set_free(&model->materials[i].set);
             texture_free(&model->materials[i].albedo);
         }
     }
