@@ -23,11 +23,12 @@
 #define UNDOCKED_WIDTH 1280
 #define UNDOCKED_HEIGHT 720
 
-#define CMD_ARENA_SIZE MEGABYTES(64)
-#define DATA_ARENA_SIZE MEGABYTES(64)
-#define IMAGE_ARENA_SIZE MEGABYTES(64)
-#define UNIFORM_ARENA_SIZE MEGABYTES(64)
-#define DESCRIPTOR_ARENA_SIZE MEGABYTES(64)
+#define CMD_ARENA_SIZE MEGABYTES(32)
+#define DATA_ARENA_SIZE GIGABYTES(1)
+#define IMAGE_ARENA_SIZE GIGABYTES(1)
+#define UNIFORM_ARENA_SIZE MEGABYTES(32)
+#define DESCRIPTOR_ARENA_SIZE MEGABYTES(32)
+#define SCRATCH_ARENA_SIZE MEGABYTES(32)
 
 typedef struct gpu_config_t {
     AppletOperationMode mode;
@@ -66,6 +67,7 @@ typedef struct gpu_t {
     heap_t data_heap; // for single use command buffers, vertex/index buffers, and CPU bitmaps
     heap_t image_heap; // for buffers, textures and whatnot
     heap_t descriptor_heap; // for descriptor sets
+    heap_t scratch_heap; // for everything that isn't needed to be stored at runtime
 } gpu_t;
 
 void gpu_init(gpu_t *gpu, gpu_config_t *config);

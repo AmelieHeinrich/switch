@@ -52,7 +52,7 @@ ROMFS		:=	romfs
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -O2 -ffunction-sections -Wno-maybe-uninitialized \
+CFLAGS	:=	-g -Wall -O2 -ffunction-sections -Wno-maybe-uninitialized -Wno-stringop-truncation \
 			$(ARCH) $(DEFINES)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__

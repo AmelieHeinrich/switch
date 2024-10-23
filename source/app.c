@@ -37,13 +37,13 @@ void app_init(app_t *app, app_config_t *config)
     pad_init(&app->curr_pad);
     gpu_init(&app->gpu, &gpu_config);
 
+    heap_init(&app->resize_heap, MEGABYTES(32), DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, app->gpu.device);
+
     app->tri_pipeline.states[0] = (DkVtxAttribState){ 0, 0, 0, DkVtxAttribSize_3x32, DkVtxAttribType_Float, 0 };
     app->tri_pipeline.states[1] = (DkVtxAttribState){ 0, 0, sizeof(float) * 3, DkVtxAttribSize_2x32, DkVtxAttribType_Float, 0 };
     app->tri_pipeline.states[2] = (DkVtxAttribState){ 0, 0, sizeof(float) * 5, DkVtxAttribSize_3x32, DkVtxAttribType_Float, 0 };
     app->tri_pipeline.state_count = 3;
     gfx_pipeline_init(&app->tri_pipeline, &app->gpu, "romfs:/shaders/tri_vsh.dksh", "romfs:/shaders/tri_fsh.dksh");
-
-    model_load(&app->model, &app->gpu, "romfs:/assets/models/scifi/SciFiHelmet.gltf");
 
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         buffer_init(&app->color_buffer[i], &app->gpu.uniform_heap, 256, 0);
@@ -54,31 +54,18 @@ void app_init(app_t *app, app_config_t *config)
     camera_resize(&app->camera, app->applet_mode == AppletOperationMode_Console ? DOCKED_WIDTH : UNDOCKED_WIDTH,
                                 app->applet_mode == AppletOperationMode_Console ? DOCKED_HEIGHT : UNDOCKED_HEIGHT);
     
-    texture_init(&app->depth_target, app->gpu.width, app->gpu.height, DkImageFormat_ZF32, &app->gpu.image_heap, app->gpu.device, DkImageFlags_UsageRender | DkImageFlags_HwCompression);
-
-    // @note(ame): texture creation
-    bitmap_t bitmap = bitmap_load("romfs:/assets/models/scifi/SciFiHelmet_BaseColor.png");
-    texture_init(&app->my_texture, bitmap.width, bitmap.height, DkImageFormat_RGBA8_Unorm, &app->gpu.image_heap, app->gpu.device, 0);
-
-    buffer_t staging;
-    buffer_init(&staging, &app->gpu.data_heap, app->my_texture.size, 0);
-    buffer_upload(&staging, bitmap.pixels, app->my_texture.size);
-
-    cmd_list_single_use_t uploader = cmd_list_begin_single_use(app->gpu.device, &app->gpu.cmd_heap);
-    cmd_list_copy_buffer_to_texture(uploader.buf, &staging, &app->my_texture);
-    cmd_list_end_single_use(&uploader, app->gpu.queue);
-
-    gpu_wait(&app->gpu);
+    texture_init(&app->depth_target, app->gpu.width, app->gpu.height, DkImageFormat_ZF32, &app->resize_heap, app->gpu.device, DkImageFlags_UsageRender | DkImageFlags_HwCompression);
 
     // @note(ame): dset and sampler
     app->my_sampler = sampler_init(DkFilter_Linear, DkWrapMode_Repeat);
-    app->image_set = descriptor_set_init(&app->gpu.descriptor_heap, 1);
-    app->sampler_set = descriptor_set_init(&app->gpu.descriptor_heap, 1);
+    app->image_set = descriptor_set_init(&app->gpu.data_heap, 1);
+    app->sampler_set = descriptor_set_init(&app->gpu.data_heap, 1);
 
-    // @note(ame): cleanup
-    cmd_list_free_single_use(&uploader);
-    buffer_free(&staging);
-    bitmap_free(&bitmap);
+    //model_load(&app->model, &app->gpu, "romfs:/assets/models/scifi/SciFiHelmet.gltf");
+    //model_load(&app->model, &app->gpu, "romfs:/assets/models/flighthelmet/FlightHelmet.gltf");
+    model_load(&app->model, &app->gpu, "romfs:/assets/models/sponza/Sponza.gltf");
+
+    gpu_wait(&app->gpu);
 }
 
 void app_run(app_t *app)
@@ -96,8 +83,10 @@ void app_run(app_t *app)
 
             gpu_resize(&app->gpu, mode);
 
+            app->resize_heap.allocator.offset = 0;
+
             texture_free(&app->depth_target);
-            texture_init(&app->depth_target, app->gpu.width, app->gpu.height, DkImageFormat_ZF32, &app->gpu.image_heap, app->gpu.device, DkImageFlags_UsageRender | DkImageFlags_HwCompression);      
+            texture_init(&app->depth_target, app->gpu.width, app->gpu.height, DkImageFormat_ZF32, &app->resize_heap, app->gpu.device, DkImageFlags_UsageRender | DkImageFlags_HwCompression);      
             
             camera_resize(&app->camera, w, h);
             app->applet_mode = mode;
@@ -128,19 +117,21 @@ void app_run(app_t *app)
                 cmd_list_clear_color(frame.cmd_buf, app->applet_mode == AppletOperationMode_Console ? HMM_V3(0.0f, 0.0f, 0.0f) : HMM_V3(1.0f, 1.0f, 1.0f), 0);
                 cmd_list_clear_depth(frame.cmd_buf);
                 cmd_list_bind_gfx_pipeline(frame.cmd_buf, &app->tri_pipeline);
-                cmd_list_dset_write_texture(frame.cmd_buf, &app->image_set, &app->my_texture, 0);
                 cmd_list_dset_write_sampler(frame.cmd_buf, &app->sampler_set, &app->my_sampler, 0);
                 cmd_list_bind_image_dset(frame.cmd_buf, &app->image_set);
                 cmd_list_bind_sampler_dset(frame.cmd_buf, &app->sampler_set);
-                cmd_list_bind_texture(frame.cmd_buf, DkStage_Fragment, 0, 0);
                 cmd_list_bind_uni_buffer(frame.cmd_buf, &app->color_buffer[frame.frame_idx], 0, DkStage_Vertex);
-                for (int i = 0; i < app->model.submesh_count; i++) {
-                    buffer_upload(&app->model.submeshes[i].user_buffer[frame.frame_idx], &app->model.submeshes[i].transform, sizeof(HMM_Mat4));
+                for (int i = app->model.submesh_count - 1; i >= 0; i--) {
+                    submesh_t *submesh = &app->model.submeshes[i];
+                    material_t *material = &app->model.materials[submesh->mat_index];
+                    buffer_upload(&submesh->user_buffer[frame.frame_idx], &submesh->transform, sizeof(HMM_Mat4));
 
-                    cmd_list_bind_vtx_buffer(frame.cmd_buf, &app->model.submeshes[i].vertex_buffer);
-                    cmd_list_bind_idx_buffer(frame.cmd_buf, &app->model.submeshes[i].index_buffer);
-                    cmd_list_bind_uni_buffer(frame.cmd_buf, &app->model.submeshes[i].user_buffer[frame.frame_idx], 1, DkStage_Vertex);
-                    cmd_list_draw_indexed(frame.cmd_buf, DkPrimitive_Triangles, app->model.submeshes[i].index_count);
+                    cmd_list_dset_write_texture(frame.cmd_buf, &app->image_set, &material->albedo, 0);
+                    cmd_list_bind_vtx_buffer(frame.cmd_buf, &submesh->vertex_buffer);
+                    cmd_list_bind_idx_buffer(frame.cmd_buf, &submesh->index_buffer);
+                    cmd_list_bind_uni_buffer(frame.cmd_buf, &submesh->user_buffer[frame.frame_idx], 1, DkStage_Vertex);
+                    cmd_list_bind_texture(frame.cmd_buf, DkStage_Fragment, 0, 0);
+                    cmd_list_draw_indexed(frame.cmd_buf, DkPrimitive_Triangles, submesh->index_count);
                 }
             }
             gpu_end(&app->gpu, &frame);
@@ -154,7 +145,6 @@ void app_exit(app_t *app)
     gpu_wait(&app->gpu);
 
     texture_free(&app->depth_target);
-    texture_free(&app->my_texture);
     for (i32 i = 0; i < DEFAULT_GPU_FB_COUNT; i++) {
         buffer_free(&app->color_buffer[i]);
     }

@@ -24,6 +24,7 @@
 typedef struct allocation_t {
     u32 offset;
     u32 metadata;
+    u32 size;
 } allocation_t;
 
 typedef struct allocator_node_t {
@@ -40,6 +41,7 @@ typedef struct allocator_t {
     u32 size;
     u32 max_allocs;
     u32 free_storage;
+    u32 offset;
 
     u32 used_bins_top;
     u32 used_bins[NUM_TOP_BINS];

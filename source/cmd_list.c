@@ -12,7 +12,7 @@ cmd_list_single_use_t cmd_list_begin_single_use(DkDevice device, heap_t *heap)
     dkCmdBufMakerDefaults(&maker, device);
     DkCmdBuf buf = dkCmdBufCreate(&maker);
 
-    heap_alloc_t alloc = heap_alloc(heap, KILOBYTES(8));
+    heap_alloc_t alloc = heap_alloc(heap, KILOBYTES(4));
     dkCmdBufAddMemory(buf, heap->block, alloc.offset, alloc.size);
 
     return (cmd_list_single_use_t){

@@ -9,7 +9,7 @@
 #include "bitmap.h"
 #include "util.h"
 
-bitmap_t bitmap_load(const char *path)
+void bitmap_load(bitmap_t *bitmap, const char *path)
 {
     i32 w, h, c;
     stbi_set_flip_vertically_on_load(true);
@@ -18,11 +18,9 @@ bitmap_t bitmap_load(const char *path)
         throw_error("Failed to load texture", "Failed to load texture", -1);
     }
 
-    return (bitmap_t){
-        .width = w,
-        .height = h,
-        .pixels = p
-    };
+    bitmap->width = w;
+    bitmap->height = h;
+    bitmap->pixels = p;
 }
 
 void bitmap_free(bitmap_t *bitmap)

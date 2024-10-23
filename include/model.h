@@ -23,10 +23,7 @@ typedef struct vertex_t {
 
 typedef struct material_t {
     b8 has_albedo;
-    b8 has_bump;
-
     texture_t albedo;
-    texture_t bump;
 } material_t;
 
 typedef struct submesh_t {
@@ -51,7 +48,7 @@ typedef struct model_t {
     u32 vertex_count;
     u32 index_count;
     
-    char* directory;
+    char directory[512];
     gpu_t *gpu;
 } model_t;
 

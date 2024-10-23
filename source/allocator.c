@@ -10,6 +10,7 @@
 #include "allocator.h"
 #include "util.h"
 
+#if 0
 #define MANTISSA_BITS 3
 #define MANTISSA_VALUE (1 << MANTISSA_BITS)
 #define MANTISSA_MASK (MANTISSA_VALUE - 1)
@@ -178,6 +179,14 @@ void allocator_reset(allocator_t *allocator)
 
     for (u32 i = 0; i < allocator->max_allocs; i++) {
         allocator->free_nodes[i] = allocator->max_allocs - i - 1;
+
+        allocator->nodes[i].data_offset = 0;
+        allocator->nodes[i].data_size = 0;
+        allocator->nodes[i].bin_list_prev = ALLOCATION_NO_SPACE;
+        allocator->nodes[i].bin_list_next = ALLOCATION_NO_SPACE;
+        allocator->nodes[i].neighbor_prev = ALLOCATION_NO_SPACE;
+        allocator->nodes[i].neighbor_next = ALLOCATION_NO_SPACE;
+        allocator->nodes[i].used = false;
     }
 
     allocator_insert_node_into_bin(allocator, allocator->size, 0);
@@ -303,3 +312,33 @@ void allocator_delete(allocator_t *allocator, allocation_t *allocation)
         allocator->nodes[neighbor_prev].neighbor_next = combined_node_index;
     }
 }
+#else
+
+void allocator_init(allocator_t *allocator, u32 size)
+{
+    allocator->offset = 0;
+}
+
+void allocator_free(allocator_t *allocator)
+{
+    
+}
+
+allocation_t allocator_new(allocator_t *allocator, u32 size)
+{
+    allocation_t alloc;
+    alloc.offset = allocator->offset;
+    alloc.size = size;
+
+    allocator->offset += size;
+    return alloc;
+}
+
+void allocator_delete(allocator_t *allocator, allocation_t *allocation)
+{
+    allocation->size = 0;
+    allocation->offset = 0;
+    allocation->metadata = 0;
+}
+
+#endif

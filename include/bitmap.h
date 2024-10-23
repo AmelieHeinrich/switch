@@ -15,7 +15,7 @@ typedef struct bitmap_t {
     u8* pixels;
 } bitmap_t;
 
-bitmap_t bitmap_load(const char *path);
+void bitmap_load(bitmap_t *bitmap, const char *path);
 void bitmap_free(bitmap_t *bitmap);
 
 #endif

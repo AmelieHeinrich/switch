@@ -23,6 +23,7 @@
 #include "sampler.h"
 #include "descriptor_set.h"
 #include "model.h"
+#include "heap.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -51,13 +52,13 @@ typedef struct app_t {
     gfx_pipeline_t tri_pipeline;
     model_t model;
     buffer_t color_buffer[DEFAULT_GPU_FB_COUNT];
-    texture_t my_texture;
     sampler_t my_sampler;
     descriptor_set_t image_set;
     descriptor_set_t sampler_set;
 
     camera_t camera;
     texture_t depth_target;
+    heap_t resize_heap;
 } app_t;
 
 void app_init(app_t *app, app_config_t *config);
