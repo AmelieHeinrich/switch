@@ -20,6 +20,10 @@ And that's it! Launch the .nro file using your emulator of choice or by dumping 
 
 ## Roadmap
 
-- Scene system & refactor
-- GLTF textures
+- Rework GPU allocator
 - GPU mipmaps
+
+## Authors
+
+- Amélie Heinrich
+- Kripesh Adhikari
