@@ -10,7 +10,7 @@
 #include "allocator.h"
 #include "util.h"
 
-#if 0
+#if 1
 #define MANTISSA_BITS 3
 #define MANTISSA_VALUE (1 << MANTISSA_BITS)
 #define MANTISSA_MASK (MANTISSA_VALUE - 1)
@@ -107,7 +107,12 @@ u32 allocator_insert_node_into_bin(allocator_t *allocator, u32 size, u32 data_of
     allocator->nodes[node_index].data_offset = data_offset;
     allocator->nodes[node_index].data_size = size;
     allocator->nodes[node_index].bin_list_next = top_node_index;
-    if (top_node_index != ALLOCATION_NO_SPACE) allocator->nodes[node_index].bin_list_prev = node_index;
+    allocator->nodes[node_index].bin_list_prev = ALLOCATION_NO_SPACE;
+    allocator->nodes[node_index].neighbor_prev = ALLOCATION_NO_SPACE;
+    allocator->nodes[node_index].neighbor_next = ALLOCATION_NO_SPACE;
+    allocator->nodes[node_index].used = false;
+
+    if (top_node_index != ALLOCATION_NO_SPACE) allocator->nodes[top_node_index].bin_list_prev = node_index;
     allocator->bin_indices[bin_index] = node_index;
 
     allocator->free_storage += size;
@@ -119,7 +124,7 @@ void allocator_remove_node_from_bin(allocator_t *allocator, u32 node_index)
     allocator_node_t *node = &allocator->nodes[node_index];
 
     if (node->bin_list_prev != ALLOCATION_NO_SPACE) {
-        allocator->nodes[node->bin_list_prev].bin_list_prev = node->bin_list_next;
+        allocator->nodes[node->bin_list_prev].bin_list_next = node->bin_list_next;
         if (node->bin_list_next != ALLOCATION_NO_SPACE) allocator->nodes[node->bin_list_next].bin_list_prev = node->bin_list_prev;
     } else {
         u32 bin_index = uint_to_float_round_down(node->data_size);
@@ -130,7 +135,7 @@ void allocator_remove_node_from_bin(allocator_t *allocator, u32 node_index)
         if (node->bin_list_next != ALLOCATION_NO_SPACE) allocator->nodes[node->bin_list_next].bin_list_prev = ALLOCATION_NO_SPACE;
 
         if (allocator->bin_indices[bin_index] == ALLOCATION_NO_SPACE) {
-            allocator->used_bins[bin_index] &= ~(1 << leaf_bin_index);
+            allocator->used_bins[top_bin_index] &= ~(1 << leaf_bin_index);
 
             if (allocator->used_bins[top_bin_index] == 0) {
                 allocator->used_bins_top &= ~(1 << top_bin_index);
@@ -238,7 +243,7 @@ allocation_t allocator_new(allocator_t *allocator, u32 size)
     if (node->bin_list_next != ALLOCATION_NO_SPACE) allocator->nodes[node->bin_list_next].bin_list_prev = ALLOCATION_NO_SPACE;
     allocator->free_storage -= node_total_size;
 
-    if (allocator->bin_indices[bin_index] != ALLOCATION_NO_SPACE) {
+    if (allocator->bin_indices[bin_index] == ALLOCATION_NO_SPACE) {
         allocator->used_bins[top_bin_index] &= ~(1 << leaf_bin_index);
 
         if (allocator->used_bins[top_bin_index] == 0) {
@@ -277,7 +282,7 @@ void allocator_delete(allocator_t *allocator, allocation_t *allocation)
 
     if ((node->neighbor_prev != ALLOCATION_NO_SPACE) && (allocator->nodes[node->neighbor_prev].used == false)) {
         allocator_node_t* prev_node = &allocator->nodes[node->neighbor_prev];
-        offset += prev_node->data_offset;
+        offset = prev_node->data_offset;
         size += prev_node->data_size;
 
         allocator_remove_node_from_bin(allocator, node->neighbor_prev);
