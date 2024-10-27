@@ -24,6 +24,7 @@
 #include "descriptor_set.h"
 #include "model.h"
 #include "heap.h"
+#include "audio.h"
 
 typedef struct app_config_t {
     b8 print_to_fb;
@@ -47,6 +48,10 @@ typedef struct app_t {
     gpu_t gpu;
     stimer_t dt_timer;
     f32 last;
+
+    // @note(kripesh): Audio
+    audio_t audio;
+    audio_track_t tracks[2];
     
     // @note(ame): renderer
     gfx_pipeline_t tri_pipeline;

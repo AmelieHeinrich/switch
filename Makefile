@@ -62,7 +62,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -ldeko3dd -lnx -lm
+LIBS	:= -ldeko3dd -lnx -lopusfile -logg -lopus -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

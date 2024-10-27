@@ -39,6 +39,7 @@ void app_init(app_t *app, app_config_t *config)
     input_init(1);
     pad_init(&app->curr_pad);
     gpu_init(&app->gpu, &gpu_config);
+    audio_init(&app->audio);
 
     heap_init(&app->resize_heap, MEGABYTES(32), DkMemBlockFlags_GpuCached | DkMemBlockFlags_Image, app->gpu.device);
 
@@ -67,6 +68,9 @@ void app_init(app_t *app, app_config_t *config)
     //model_load(&app->model, &app->gpu, "romfs:/assets/models/scifi/SciFiHelmet.gltf");
     //model_load(&app->model, &app->gpu, "romfs:/assets/models/flighthelmet/FlightHelmet.gltf");
     model_load(&app->model, &app->gpu, "romfs:/assets/models/sponza/Sponza.gltf");
+
+    audio_load(&app->tracks[0], &app->audio, "romfs:/assets/sounds/sample.opus");
+    audio_load(&app->tracks[1], &app->audio, "romfs:/assets/sounds/crash.opus");
 
     appletSetCpuBoostMode(ApmCpuBoostMode_Normal);
 
@@ -101,10 +105,17 @@ void app_run(app_t *app)
         pad_update(&app->curr_pad);
         if (pad_down(&app->curr_pad, HidNpadButton_Plus))
             break;
+        if (pad_down(&app->curr_pad, HidNpadButton_A))
+            audio_play(&app->tracks[0], &app->audio, 0);
+        if (pad_down(&app->curr_pad, HidNpadButton_B))
+            audio_play(&app->tracks[1], &app->audio, 1);
 
         // @note(ame): Update camera
         camera_update(&app->camera);
         camera_input(&app->camera, &app->curr_pad);
+
+        // @note(kripesh): Update audio
+        audio_update(&app->audio);
 
         // @note(ame): MAIN RENDER LOOP
         if (!app->config->print_to_fb) {
@@ -155,6 +166,9 @@ void app_exit(app_t *app)
     model_free(&app->model);
     heap_free(&app->resize_heap);
     gpu_exit(&app->gpu);
+    audio_free(&app->tracks[0]);
+    audio_free(&app->tracks[1]);
+    audio_exit(&app->audio);
     if (app->config->print_to_fb)
         consoleExit(NULL);
     romfsExit();
