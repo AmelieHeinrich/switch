@@ -71,6 +71,8 @@ void app_init(app_t *app, app_config_t *config)
 
     audio_load(&app->tracks[0], &app->audio, "romfs:/assets/sounds/sample.opus");
     audio_load(&app->tracks[1], &app->audio, "romfs:/assets/sounds/crash.opus");
+    audio_set_position(&app->audio, 1, HMM_V3(0.0f, 0.0f, 0.0f));
+    audio_set_attenuation(&app->audio, 1, 3.0f, 10.0f);
 
     appletSetCpuBoostMode(ApmCpuBoostMode_Normal);
 
@@ -115,7 +117,7 @@ void app_run(app_t *app)
         camera_input(&app->camera, &app->curr_pad);
 
         // @note(kripesh): Update audio
-        audio_update(&app->audio);
+        audio_update(&app->audio, &app->camera.position, &app->camera.front, &app->camera.right);
 
         // @note(ame): MAIN RENDER LOOP
         if (!app->config->print_to_fb) {

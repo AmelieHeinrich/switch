@@ -80,6 +80,9 @@ void audio_init(audio_t *audio) {
         audrvVoiceSetMixFactor(&audio->driver, i, 1.0f, 0, 0);
         audrvVoiceSetMixFactor(&audio->driver, i, 1.0f, 0, 1);
         audrvVoiceStart(&audio->driver, i);
+
+        audio->fade_distances[i] = INFINITY;
+        audio->volumes[i] = 1.0f;
     }
 }
 
@@ -90,7 +93,46 @@ void audio_exit(audio_t *audio) {
     free(audio->opuspkt_tempbuf);
 }
 
-void audio_update(audio_t *audio) {    
+void audio_update(audio_t *audio, HMM_Vec3 *camera_position, HMM_Vec3 *camera_front, HMM_Vec3 *camera_right) {
+    for (u32 i = 0; i < NUM_SLOTS; i++) {
+        if (audio->position_enabled & (1 << i)) {
+            HMM_Vec3 cam_to_audio = HMM_SubV3(audio->positions[i], *camera_position);
+            f32 distance = HMM_LenV3(cam_to_audio);
+            
+            // @note(kripesh): Spatialization (in XZ plane only)
+            cam_to_audio.Y = 0.0f;
+            HMM_Vec3 cam_to_audio_xz = HMM_NormV3(cam_to_audio);
+            HMM_Vec3 camera_front_xz = HMM_NormV3(HMM_V3(camera_front->X, 0.0f, camera_front->Z));
+
+            f32 center = HMM_DotV3(cam_to_audio_xz, camera_front_xz);
+            f32 right = HMM_DotV3(cam_to_audio_xz, *camera_right);
+
+            if (center < 0.0f) {
+                center = HMM_MAX(0.0f, HMM_ABS(center) - 0.15f);
+            }
+
+            f32 final_right = HMM_MIN(center + HMM_MAX(0.0f, right), 1.0f);
+            f32 final_left = HMM_MIN(center + HMM_MAX(0.0f, -right), 1.0f);
+
+            // @note(kripesh): Attenuation
+            f32 factor = 1.0f;
+            if (distance > audio->fade_distances[i]) {
+                if (distance > audio->cutoff_distances[i]) {
+                    factor = 0.0f;
+                } else {
+                    factor = 1.0f - (distance - audio->fade_distances[i]) / (audio->cutoff_distances[i] - audio->fade_distances[i]);
+                }
+            }
+
+            factor *= audio->volumes[i];
+            final_right *= factor;
+            final_left *= factor;
+
+            audrvVoiceSetMixFactor(&audio->driver, i, final_right, 0, 0);
+            audrvVoiceSetMixFactor(&audio->driver, i, final_left, 0, 1);
+        }
+    }
+    
     audrvUpdate(&audio->driver);
 }
 
@@ -145,6 +187,24 @@ void audio_play(audio_track_t *track, audio_t *audio, i32 slot) {
 }
 
 void audio_set_volume(audio_t *audio, i32 slot, f32 volume) {
-    audrvVoiceSetMixFactor(&audio->driver, slot, volume, 0, 0);
-    audrvVoiceSetMixFactor(&audio->driver, slot, volume, 0, 1);
+    audio->volumes[slot] = volume;
+
+    if (!(audio->position_enabled & (1 << slot))) {
+        audrvVoiceSetMixFactor(&audio->driver, slot, volume, 0, 0);
+        audrvVoiceSetMixFactor(&audio->driver, slot, volume, 0, 1);
+    }
+}
+
+void audio_set_position(audio_t *audio, i32 slot, HMM_Vec3 position) {
+    audio->position_enabled |= (1 << slot);
+    audio->positions[slot] = position;
+}
+
+void audio_set_attenuation(audio_t *audio, i32 slot, f32 fade_distance, f32 cutoff_distance) {
+   audio->fade_distances[slot] = fade_distance;
+   audio->cutoff_distances[slot] = cutoff_distance;
+}
+
+void audio_set_loop(audio_track_t *track, b8 loop) {
+    track->is_looping = loop;
 }
