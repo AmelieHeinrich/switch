@@ -17,6 +17,7 @@ And that's it! Launch the .nro file using your emulator of choice or by dumping 
     - Ryujinx (r.b4cac89)
     - Suyu (dev-0de49070e4)
     - Yuzu (master-67bc8a6de)
+    - Switch (18.1.0, Atmosphere 1.7.1)
 
 ## Roadmap
 

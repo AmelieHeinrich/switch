@@ -14,6 +14,9 @@
 
 void app_init(app_t *app, app_config_t *config)
 {
+    // @note(kripesh): boost CPU for faster loading
+    appletSetCpuBoostMode(ApmCpuBoostMode_FastLoad);
+
     app->config = config;
     app->applet_mode = appletGetOperationMode();
 
@@ -64,6 +67,8 @@ void app_init(app_t *app, app_config_t *config)
     //model_load(&app->model, &app->gpu, "romfs:/assets/models/scifi/SciFiHelmet.gltf");
     //model_load(&app->model, &app->gpu, "romfs:/assets/models/flighthelmet/FlightHelmet.gltf");
     model_load(&app->model, &app->gpu, "romfs:/assets/models/sponza/Sponza.gltf");
+
+    appletSetCpuBoostMode(ApmCpuBoostMode_Normal);
 
     gpu_wait(&app->gpu);
 }
@@ -148,6 +153,7 @@ void app_exit(app_t *app)
         buffer_free(&app->color_buffer[i]);
     }
     model_free(&app->model);
+    heap_free(&app->resize_heap);
     gpu_exit(&app->gpu);
     if (app->config->print_to_fb)
         consoleExit(NULL);
