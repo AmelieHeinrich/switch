@@ -1,6 +1,9 @@
 # Switch : a homebrew Nintendo Switch sandbox for graphics and game engine programming.
 
-Switch is a 3D renderer and lightweight game engine written in C, running exclusively on Nintendo Switch. It is using devkitPro's libNX SDK and the Deko3D API.
+![](.github/sponza.jpg)
+(Screenshot by Kripesh Adhikari)
+
+Switch is a 3D renderer and lightweight graphics sample written in C, running exclusively on Nintendo Switch. It is using devkitPro's libNX SDK and the Deko3D API.
 
 ## Building
 
